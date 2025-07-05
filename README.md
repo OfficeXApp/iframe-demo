@@ -1,69 +1,120 @@
-# React + TypeScript + Vite
+# Demo iFrame OfficeX
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[https://officex.app](https://officex.app)
 
-Currently, two official plugins are available:
+The iFrame integration allows drop-in UI for OfficeX, orgs+profiles scoped by default to your domain, but also possible to request permission to other domains. For actual programmatic use without iframe ui, use the authToken with REST API.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Basic Setup
 
-## Expanding the ESLint configuration
+### Parent POV
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+```html
+<h1>Parent Document</h1>
+<iframe
+  id="officex-iframe"
+  src="https://drive.officex.app"
+  width="100%"
+  height="600px"
+></iframe>
+<script>
+  // Init IFrame
+  const iframe = document.getElementById("officex-iframe");
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
+  // Configuration for initialization
+  const initConfig = {
+    ephemeral: {
+      org_client_secret: "your-org-seed-phrase", // this can be an arbitrary string
+      profile_client_secret: "your-profile-seed-phrase", // this can be a user id from your db
+      org_name: "your-org-name", // this can be an arbitrary string
+      profile_name: "your-profile-name", // this can be an arbitrary string
     },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
+    cloud: {
+      // if using existing cloud, the child iframe will check if the user has approved the connection (allowlist the host domain - the allowlist lives in officex drive ui indexdb identity framework, pure clientside)
+      // if using existing cloud is not provided, the child iframe will issue a popup to allow parent domain to add this org+profile to your officex
+      host: "your-custom-backend", // this can be an arbitrary string
+      orgID: "your-drive-id", // this can be an arbitrary string
+      profileID: "your-profile-id", // this can be an arbitrary string
+      // only provide apiKey if you are subsidizing for users
+      apiKey: "your-api-key", // omit if you are using their existing profile
     },
-  },
-])
+  };
+
+  // Function to initialize the iframe
+  function initializeIframe() {
+    iframe.contentWindow.postMessage(
+      {
+        type: "init",
+        data: initConfig,
+        tracer: "init-example",
+      },
+      "*"
+    );
+  }
+
+  // Wait for iframe to load before sending messages
+  // This event fires on both initial load AND refresh
+  iframe.addEventListener("load", () => {
+    console.log("IFrame loaded/refreshed - initializing...");
+    // Add a small delay to ensure iframe is fully ready
+    setTimeout(initializeIframe, 100);
+  });
+
+  // Listen for messages from IFrame
+  window.addEventListener("message", (event) => {
+    // Validate origin for security
+    // if (event.origin !== "https://drive.officex.app") return;
+
+    const { type, data, tracer } = event.data;
+
+    // Handle responses based on tracer
+    switch (tracer) {
+      case "init-example":
+        console.log("Init response:", data);
+        if (data.success) {
+          console.log("IFrame initialized successfully");
+        } else {
+          console.error("IFrame initialization failed:", data.error);
+          // Optionally retry initialization after a delay
+          setTimeout(initializeIframe, 2000);
+        }
+        break;
+
+      case "go-to-page-action01": // often used to navigate to a redeem gift card page
+        console.log("Go to page url response:", data);
+        break;
+
+      case "whoami-action04":
+        console.log("WhoAmI response:", data); // contains info about disks so its easy to show a default drive url
+        break;
+
+      case "getAuthToken-action05":
+        console.log("Auth token response:", data);
+        break;
+    }
+  });
+
+  // Helper function to send messages to iframe
+  function sendMessageToIframe(type, data, tracer) {
+    if (!iframe.contentWindow) {
+      console.warn("IFrame not ready");
+      return;
+    }
+    iframe.contentWindow.postMessage({ type, data, tracer }, "*");
+  }
+
+  // Go to Page
+  function goToPage(pageData) {
+    sendMessageToIframe("go-to-page", pageData, "go-to-page-action01");
+  }
+
+  // WhoAmI
+  function whoAmI() {
+    sendMessageToIframe("whoami", {}, "whoami-action04");
+  }
+
+  // Get Auth Token
+  function getAuthToken() {
+    sendMessageToIframe("getAuthToken", {}, "getAuthToken-action05");
+  }
+</script>
 ```
