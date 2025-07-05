@@ -4,6 +4,10 @@
 
 The iFrame integration allows drop-in UI for OfficeX, orgs+profiles scoped by default to your domain, but also possible to request permission to other domains. For actual programmatic use without iframe ui, use the authToken with REST API.
 
+<img width="1506" alt="image" src="https://github.com/user-attachments/assets/d12c347a-dc5f-4a3d-af71-c5695b0e6523" />
+<img width="1509" alt="image" src="https://github.com/user-attachments/assets/aef71c19-a11c-4b2a-8842-4e762318c579" />
+
+
 ## Basic Setup
 
 ### Parent POV
