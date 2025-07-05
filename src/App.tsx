@@ -27,6 +27,34 @@ interface AuthTokenIFrameResponse {
   auth_token: string;
 }
 
+// REST Command types
+interface CreateFileCommand {
+  action: "CREATE_FILE";
+  payload: {
+    name: string;
+    file_size?: number;
+    expires_at?: number;
+    raw_url: string;
+    base64?: string;
+  };
+}
+
+// REST Command types for CREATE_FOLDER
+interface CreateFolderCommandPayload {
+  name: string;
+}
+
+interface CreateFolderCommand {
+  action: "CREATE_FOLDER";
+  payload: CreateFolderCommandPayload;
+}
+
+interface RestCommandResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
 // Set a global-like variable for development mode
 const LOCAL_DEV_MODE = true;
 const iframeOrigin = LOCAL_DEV_MODE
@@ -43,6 +71,12 @@ function App() {
   const [initializationAttempts, setInitializationAttempts] = useState(0);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const [fileSize, setFileSize] = useState(1024);
+  const [rawUrl, setRawUrl] = useState("https://bitcoin.org/bitcoin.pdf");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Generate unique seeds for this session - persist these across refreshes
   const org_client_secret = useRef(`org-123abc`);
@@ -118,6 +152,95 @@ function App() {
     }
     sendMessageToIframe("officex-auth-token", {}, "auth-token-" + Date.now());
   }, [iframeReady, sendMessageToIframe]);
+
+  const createFileCommand = useCallback(() => {
+    if (!iframeReady) {
+      console.warn("Cannot create file: iframe not ready");
+      return;
+    }
+
+    // Extract filename from URL
+    const urlFileName = rawUrl.split("/").pop() || "downloaded-file";
+
+    const command: CreateFileCommand = {
+      action: "CREATE_FILE",
+      payload: {
+        name: urlFileName,
+        file_size: fileSize,
+        raw_url: rawUrl,
+      },
+    };
+
+    sendMessageToIframe(
+      "officex-rest-command",
+      command,
+      "create-file-" + Date.now()
+    );
+  }, [iframeReady, fileSize, rawUrl, sendMessageToIframe]);
+
+  const createFileWithData = useCallback(async () => {
+    if (!iframeReady || !selectedFile) {
+      console.warn("Cannot create file: iframe not ready or no file selected");
+      return;
+    }
+
+    try {
+      // Convert file to base64
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Remove data:mime;base64, prefix
+          const base64 = result.split(",")[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(selectedFile);
+      });
+
+      const command: CreateFileCommand = {
+        action: "CREATE_FILE",
+        payload: {
+          name: selectedFile.name,
+          file_size: selectedFile.size,
+          raw_url: "", // Empty when using base64
+          base64: base64Data,
+        },
+      };
+
+      sendMessageToIframe(
+        "officex-rest-command",
+        command,
+        "create-file-data-" + Date.now()
+      );
+    } catch (error) {
+      console.error("Failed to convert file to base64:", error);
+    }
+  }, [iframeReady, selectedFile, sendMessageToIframe]);
+
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+        if (file.size > maxSize) {
+          alert(
+            `File size (${(file.size / 1024 / 1024).toFixed(
+              2
+            )}MB) exceeds the 10MB limit. Please select a smaller file.`
+          );
+          // Clear the input
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+          setSelectedFile(null);
+          return;
+        }
+        setSelectedFile(file);
+      }
+    },
+    []
+  );
 
   // Handle iframe load event (fires on initial load AND refresh)
   const handleIframeLoad = useCallback(() => {
@@ -208,6 +331,15 @@ function App() {
           } else {
             setAuthTokenResponse(null);
             console.error("Auth token request failed:", data.error);
+          }
+          break;
+
+        case "officex-rest-command-response":
+          console.log("REST command response:", data);
+          if (data.success) {
+            console.log("REST command successful:", data.data);
+          } else {
+            console.error("REST command failed:", data.error);
           }
           break;
 
@@ -575,6 +707,96 @@ function App() {
             </div>
           )}
         </div>
+
+        {/* REST Commands Section */}
+        <div style={{ marginBottom: "30px" }}>
+          <h4>Create File Commands</h4>
+
+          {/* Create File with URL */}
+          <div style={sectionStyle}>
+            <h5>Create File from URL</h5>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr",
+                gap: "10px",
+                marginBottom: "15px",
+              }}
+            >
+              <input
+                type="url"
+                placeholder="Raw URL"
+                value={rawUrl}
+                onChange={(e) => setRawUrl(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+            <button
+              onClick={createFileCommand}
+              style={{
+                ...buttonStyle,
+                backgroundColor: "#4CAF50",
+                width: "100%",
+              }}
+            >
+              Create File from URL
+            </button>
+          </div>
+
+          {/* Create File with Data */}
+          <div style={sectionStyle}>
+            <h5>Create File from Local Data</h5>
+            <div style={{ marginBottom: "15px" }}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileSelect}
+                style={{ marginBottom: "10px" }}
+                accept="*/*"
+              />
+              <div
+                style={{
+                  fontSize: "11px",
+                  color: "#6c757d",
+                  marginBottom: "5px",
+                }}
+              >
+                Maximum file size: 10MB
+              </div>
+              {selectedFile && (
+                <div style={{ fontSize: "12px", color: "#6c757d" }}>
+                  Selected: {selectedFile.name} (
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)}MB)
+                  <div style={{ color: "#28a745", fontSize: "10px" }}>
+                    ✅ Within 10MB limit
+                  </div>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={createFileWithData}
+              disabled={!selectedFile}
+              style={{
+                ...buttonStyle,
+                backgroundColor: selectedFile ? "#FF9800" : "#ccc",
+                width: "100%",
+                cursor: selectedFile ? "pointer" : "not-allowed",
+              }}
+            >
+              Create File from Data
+            </button>
+          </div>
+
+          {/* REST Command Status */}
+          <div style={sectionStyle}>
+            <h5>REST Command Status</h5>
+            <div style={resultBoxStyle}>
+              <div style={{ color: "#6c757d", fontStyle: "italic" }}>
+                Check browser console for REST command responses
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -604,6 +826,7 @@ const sectionStyle = {
   padding: "15px",
   borderRadius: "8px",
   border: "1px solid #dee2e6",
+  color: "black",
 };
 
 const resultBoxStyle = {
@@ -622,6 +845,13 @@ const codeStyle = {
   fontFamily: "monospace",
   color: "#212529",
   margin: 0,
+};
+
+const inputStyle = {
+  padding: "8px 12px",
+  border: "1px solid #ddd",
+  borderRadius: "4px",
+  fontSize: "14px",
 };
 
 export default App;

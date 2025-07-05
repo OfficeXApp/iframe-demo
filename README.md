@@ -9,7 +9,6 @@ The iFrame integration allows drop-in UI for OfficeX, orgs+profiles scoped by de
 <img width="1506" alt="image" src="https://github.com/user-attachments/assets/d12c347a-dc5f-4a3d-af71-c5695b0e6523" />
 <img width="1509" alt="image" src="https://github.com/user-attachments/assets/aef71c19-a11c-4b2a-8842-4e762318c579" />
 
-
 ## Basic Setup
 
 ### Parent POV
@@ -96,6 +95,10 @@ The iFrame integration allows drop-in UI for OfficeX, orgs+profiles scoped by de
       case "getAuthToken-action05":
         console.log("Auth token response:", data);
         break;
+
+      case "rest-command-action06":
+        console.log("Rest command response:", data);
+        break;
     }
   });
 
@@ -121,6 +124,11 @@ The iFrame integration allows drop-in UI for OfficeX, orgs+profiles scoped by de
   // Get Auth Token
   function getAuthToken() {
     sendMessageToIframe("getAuthToken", {}, "getAuthToken-action05");
+  }
+
+  // Send Rest Command
+  function sendRestCommand(commandData) {
+    sendMessageToIframe("rest-command", commandData, "rest-command-action06");
   }
 </script>
 ```
