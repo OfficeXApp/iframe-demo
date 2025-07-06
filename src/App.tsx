@@ -532,6 +532,8 @@ function App() {
             height: "800px",
             border: "none",
           }}
+          sandbox="allow-same-origin allow-scripts allow-downloads allow-popups"
+          allow="clipboard-read; clipboard-write"
           onLoad={handleIframeLoad}
         />
       </div>
