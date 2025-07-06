@@ -15,6 +15,7 @@ interface AboutChildIFrameInstanceResponse {
   profile_id: string;
   profile_name: string;
   endpoint?: string;
+  frontend_domain?: string;
 }
 
 // Auth Token response type
@@ -68,7 +69,7 @@ interface CreateFolderCommand {
 // }
 
 // Set a global-like variable for development mode
-const LOCAL_DEV_MODE = true;
+const LOCAL_DEV_MODE = false;
 const iframeOrigin = LOCAL_DEV_MODE
   ? "http://localhost:5173"
   : "https://drive.officex.app";
@@ -125,6 +126,19 @@ function App() {
       profile_name: "Demo Profile",
     },
   });
+
+  // Helper function to generate the correct OfficeX URL
+  // const getOfficeXUrl = useCallback(() => {
+  //   if (!aboutResponse?.organization_id) {
+  //     return "https://officex.app"; // Fallback URL
+  //   }
+
+  //   const orgId = aboutResponse.organization_id;
+  //   const baseUrl = LOCAL_DEV_MODE
+  //     ? "http://localhost:5173"
+  //     : aboutResponse.frontend_domain;
+  //   return `${baseUrl}/org/${orgId}__/drive`;
+  // }, [aboutResponse]);
 
   // Send message to iframe
   const sendMessageToIframe = useCallback(
@@ -291,12 +305,12 @@ function App() {
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (file) {
-        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+        const maxSize = 50 * 1024 * 1024; // 50MB in bytes
         if (file.size > maxSize) {
           alert(
             `File size (${(file.size / 1024 / 1024).toFixed(
               2
-            )}MB) exceeds the 10MB limit. Please select a smaller file.`
+            )}MB) exceeds the 50MB limit. Please select a smaller file.`
           );
           // Clear the input
           if (fileInputRef.current) {
@@ -508,7 +522,7 @@ function App() {
           src={`${iframeOrigin}/org/current/drive/BROWSER_CACHE/DiskID_offline-local-browser-cache/FolderID_root-folder-offline-local-browser-cache/`}
           style={{
             width: "100%",
-            height: "600px",
+            height: "800px",
             border: "none",
           }}
           onLoad={handleIframeLoad}
@@ -546,6 +560,20 @@ function App() {
               >
                 Go to Settings
               </button>
+              {/* <a
+                href={getOfficeXUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <button style={{ ...buttonStyle, backgroundColor: "#2196F3" }}>
+                  Open OfficeX in new tab
+                  {!aboutResponse?.organization_id && (
+                    <span style={{ fontSize: "10px", display: "block" }}>
+                      (Get About Info first)
+                    </span>
+                  )}
+                </button>
+              </a> */}
             </div>
           </div>
 
@@ -612,7 +640,33 @@ function App() {
                           {aboutResponse.endpoint}
                         </div>
                       )}
+                      {/* frontend domain */}
+                      {aboutResponse.frontend_domain && (
+                        <div>
+                          <strong style={{ color: "#212529" }}>
+                            Frontend Domain:
+                          </strong>{" "}
+                          {aboutResponse.frontend_domain}
+                        </div>
+                      )}
                     </div>
+                    {/* <div
+                      style={{
+                        marginTop: "10px",
+                        padding: "8px",
+                        backgroundColor: "#e3f2fd",
+                        borderRadius: "4px",
+                        fontSize: "11px",
+                      }}
+                    >
+                      <strong style={{ color: "#1976d2" }}>
+                        Generated URL:
+                      </strong>
+                      <br />
+                      <code style={{ wordBreak: "break-all" }}>
+                        {getOfficeXUrl()}
+                      </code>
+                    </div> */}
                   </div>
                 ) : (
                   <div style={{ color: "#6c757d", fontStyle: "italic" }}>
@@ -808,7 +862,7 @@ function App() {
                     marginBottom: "5px",
                   }}
                 >
-                  Maximum file size: 10MB
+                  Maximum file size: 50MB
                 </div>
                 {selectedFile && (
                   <div style={{ fontSize: "12px", color: "#6c757d" }}>
