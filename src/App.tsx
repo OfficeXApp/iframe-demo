@@ -1,6 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
 
 // Types for iframe communication
@@ -27,6 +25,12 @@ interface AuthTokenIFrameResponse {
   auth_token: string;
 }
 
+// Label type definition
+interface LabelValue {
+  id: string;
+  value: string;
+}
+
 // REST Command types
 interface CreateFileCommand {
   action: "CREATE_FILE";
@@ -34,26 +38,34 @@ interface CreateFileCommand {
     name: string;
     file_size?: number;
     expires_at?: number;
-    raw_url: string;
+    raw_url?: string;
     base64?: string;
+    parent_folder_uuid?: string; // Optional parent folder ID
   };
-}
-
-// REST Command types for CREATE_FOLDER
-interface CreateFolderCommandPayload {
-  name: string;
 }
 
 interface CreateFolderCommand {
   action: "CREATE_FOLDER";
-  payload: CreateFolderCommandPayload;
+  payload: {
+    name: string;
+    labels?: LabelValue[];
+    expires_at?: number;
+    file_conflict_resolution?: string;
+    has_sovereign_permissions?: boolean;
+    shortcut_to?: string;
+    external_id?: string;
+    external_payload?: any;
+    parent_folder_uuid?: string; // Optional parent folder ID
+  };
 }
 
-interface RestCommandResponse {
-  success: boolean;
-  data?: any;
-  error?: string;
-}
+// type RestCommand = CreateFileCommand | CreateFolderCommand;
+
+// interface RestCommandResponse {
+//   success: boolean;
+//   data?: any;
+//   error?: string;
+// }
 
 // Set a global-like variable for development mode
 const LOCAL_DEV_MODE = true;
@@ -72,9 +84,31 @@ function App() {
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const [fileSize, setFileSize] = useState(1024);
+  // File creation state
+  const [
+    fileSize,
+    // setFileSize
+  ] = useState(1024);
   const [rawUrl, setRawUrl] = useState("https://bitcoin.org/bitcoin.pdf");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileParentFolderId, setFileParentFolderId] = useState(""); // New: Optional parent folder ID for files
+
+  // Folder creation state
+  const [folderName, setFolderName] = useState("My New Folder");
+  const [
+    folderLabels,
+    // setFolderLabels
+  ] = useState<LabelValue[]>([]);
+  const [
+    hasSovereignPermissions,
+    // setHasSovereignPermissions
+  ] = useState(false);
+  const [folderParentFolderId, setFolderParentFolderId] = useState(""); // New: Optional parent folder ID for folders
+
+  // Command results state
+  const [lastCommandResult, setLastCommandResult] = useState<any>(null);
+  const [lastFileResult, setLastFileResult] = useState<any>(null);
+  const [lastFolderResult, setLastFolderResult] = useState<any>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -153,6 +187,7 @@ function App() {
     sendMessageToIframe("officex-auth-token", {}, "auth-token-" + Date.now());
   }, [iframeReady, sendMessageToIframe]);
 
+  // Create file from URL
   const createFileCommand = useCallback(() => {
     if (!iframeReady) {
       console.warn("Cannot create file: iframe not ready");
@@ -168,6 +203,7 @@ function App() {
         name: urlFileName,
         file_size: fileSize,
         raw_url: rawUrl,
+        parent_folder_uuid: fileParentFolderId || undefined, // Include optional parent folder ID
       },
     };
 
@@ -176,8 +212,9 @@ function App() {
       command,
       "create-file-" + Date.now()
     );
-  }, [iframeReady, fileSize, rawUrl, sendMessageToIframe]);
+  }, [iframeReady, fileSize, rawUrl, fileParentFolderId, sendMessageToIframe]);
 
+  // Create file with data
   const createFileWithData = useCallback(async () => {
     if (!iframeReady || !selectedFile) {
       console.warn("Cannot create file: iframe not ready or no file selected");
@@ -205,6 +242,7 @@ function App() {
           file_size: selectedFile.size,
           raw_url: "", // Empty when using base64
           base64: base64Data,
+          parent_folder_uuid: fileParentFolderId || undefined, // Include optional parent folder ID
         },
       };
 
@@ -216,7 +254,38 @@ function App() {
     } catch (error) {
       console.error("Failed to convert file to base64:", error);
     }
-  }, [iframeReady, selectedFile, sendMessageToIframe]);
+  }, [iframeReady, selectedFile, fileParentFolderId, sendMessageToIframe]);
+
+  // Create folder
+  const createFolderCommand = useCallback(() => {
+    if (!iframeReady) {
+      console.warn("Cannot create folder: iframe not ready");
+      return;
+    }
+
+    const command: CreateFolderCommand = {
+      action: "CREATE_FOLDER",
+      payload: {
+        name: folderName,
+        labels: folderLabels,
+        has_sovereign_permissions: hasSovereignPermissions,
+        parent_folder_uuid: folderParentFolderId || undefined, // Include optional parent folder ID
+      },
+    };
+
+    sendMessageToIframe(
+      "officex-rest-command",
+      command,
+      "create-folder-" + Date.now()
+    );
+  }, [
+    iframeReady,
+    folderName,
+    folderLabels,
+    hasSovereignPermissions,
+    folderParentFolderId,
+    sendMessageToIframe,
+  ]);
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -336,10 +405,23 @@ function App() {
 
         case "officex-rest-command-response":
           console.log("REST command response:", data);
+          setLastCommandResult(data); // Store the last command result
           if (data.success) {
             console.log("REST command successful:", data.data);
+            // Store specific results for files and folders
+            if (data.data.message?.includes("Folder")) {
+              setLastFolderResult(data.data);
+            } else if (data.data.message?.includes("File")) {
+              setLastFileResult(data.data);
+            }
           } else {
             console.error("REST command failed:", data.error);
+            // Clear specific results on failure
+            if (data.error?.includes("folder")) {
+              setLastFolderResult({ error: data.error });
+            } else {
+              setLastFileResult({ error: data.error });
+            }
           }
           break;
 
@@ -368,21 +450,6 @@ function App() {
     <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
       {/* Header */}
       <div style={{ textAlign: "center", marginBottom: "30px" }}>
-        <div
-          style={{
-            display: "flex",
-            gap: "20px",
-            justifyContent: "center",
-            marginBottom: "20px",
-          }}
-        >
-          <a href="https://vite.dev" target="_blank">
-            <img src={viteLogo} className="logo" alt="Vite logo" />
-          </a>
-          <a href="https://react.dev" target="_blank">
-            <img src={reactLogo} className="logo react" alt="React logo" />
-          </a>
-        </div>
         <h1>OfficeX IFrame Integration Demo</h1>
       </div>
 
@@ -650,6 +717,263 @@ function App() {
         </div>
       )}
 
+      {/* REST Commands Section */}
+      <div style={{ marginBottom: "30px" }}>
+        <h4>REST Commands</h4>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+            gap: "20px",
+            marginBottom: "30px",
+          }}
+        >
+          {/* Create File Commands */}
+          <div style={sectionStyle}>
+            <h5>Create File Commands</h5>
+
+            {/* Optional Parent Folder ID for Files */}
+            <div style={{ marginBottom: "15px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "5px",
+                  fontWeight: "bold",
+                  fontSize: "12px",
+                }}
+              >
+                Parent Folder ID (Optional):
+              </label>
+              <input
+                type="text"
+                placeholder="Leave empty for root folder"
+                value={fileParentFolderId}
+                onChange={(e) => setFileParentFolderId(e.target.value)}
+                style={{ ...inputStyle, fontSize: "12px" }}
+              />
+              <div
+                style={{ fontSize: "10px", color: "#6c757d", marginTop: "3px" }}
+              >
+                If empty, files will be created in the root folder
+              </div>
+            </div>
+
+            {/* Create File with URL */}
+            <div style={{ marginBottom: "20px" }}>
+              <h6>Create File from URL</h6>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr",
+                  gap: "10px",
+                  marginBottom: "15px",
+                }}
+              >
+                <input
+                  type="url"
+                  placeholder="Raw URL"
+                  value={rawUrl}
+                  onChange={(e) => setRawUrl(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+              <button
+                onClick={createFileCommand}
+                style={{
+                  ...buttonStyle,
+                  backgroundColor: "#4CAF50",
+                  width: "100%",
+                }}
+              >
+                Create File from URL
+              </button>
+            </div>
+
+            {/* Create File with Data */}
+            <div>
+              <h6>Create File from Local Data</h6>
+              <div style={{ marginBottom: "15px" }}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileSelect}
+                  style={{ marginBottom: "10px" }}
+                  accept="*/*"
+                />
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: "#6c757d",
+                    marginBottom: "5px",
+                  }}
+                >
+                  Maximum file size: 10MB
+                </div>
+                {selectedFile && (
+                  <div style={{ fontSize: "12px", color: "#6c757d" }}>
+                    Selected: {selectedFile.name} (
+                    {(selectedFile.size / 1024 / 1024).toFixed(2)}MB)
+                    <div style={{ color: "#28a745", fontSize: "10px" }}>
+                      ✅ Within 10MB limit
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={createFileWithData}
+                disabled={!selectedFile}
+                style={{
+                  ...buttonStyle,
+                  backgroundColor: selectedFile ? "#FF9800" : "#ccc",
+                  width: "100%",
+                  cursor: selectedFile ? "pointer" : "not-allowed",
+                }}
+              >
+                Create File from Data
+              </button>
+            </div>
+
+            {/* File Creation Result */}
+            {lastFileResult && (
+              <div
+                style={{
+                  marginTop: "15px",
+                  padding: "10px",
+                  borderRadius: "6px",
+                  backgroundColor: lastFileResult.error ? "#fee" : "#efe",
+                  border: `1px solid ${lastFileResult.error ? "#fcc" : "#cfc"}`,
+                  fontSize: "12px",
+                }}
+              >
+                {lastFileResult.error ? (
+                  <div style={{ color: "#d32f2f" }}>
+                    <strong>❌ Error:</strong> {lastFileResult.error}
+                  </div>
+                ) : (
+                  <div style={{ color: "#2e7d32" }}>
+                    <div>
+                      <strong>✅ File Created Successfully!</strong>
+                    </div>
+                    <div>
+                      <strong>Name:</strong> {lastFileResult.name}
+                    </div>
+                    <div>
+                      <strong>File ID:</strong> {lastFileResult.fileID}
+                    </div>
+                    <div>
+                      <strong>Parent Folder:</strong>{" "}
+                      {lastFileResult.parentFolderID}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Create Folder Commands */}
+          <div style={sectionStyle}>
+            <h5>Create Folder Commands</h5>
+
+            {/* Optional Parent Folder ID for Folders */}
+            <div style={{ marginBottom: "15px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "5px",
+                  fontWeight: "bold",
+                  fontSize: "12px",
+                }}
+              >
+                Parent Folder ID (Optional):
+              </label>
+              <input
+                type="text"
+                placeholder="Leave empty for root folder"
+                value={folderParentFolderId}
+                onChange={(e) => setFolderParentFolderId(e.target.value)}
+                style={{ ...inputStyle, fontSize: "12px" }}
+              />
+              <div
+                style={{ fontSize: "10px", color: "#6c757d", marginTop: "3px" }}
+              >
+                If empty, folder will be created in the root folder
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "15px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "5px",
+                  fontWeight: "bold",
+                }}
+              >
+                Folder Name:
+              </label>
+              <input
+                type="text"
+                placeholder="Enter folder name"
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+
+            <button
+              onClick={createFolderCommand}
+              disabled={!folderName.trim()}
+              style={{
+                ...buttonStyle,
+                backgroundColor: folderName.trim() ? "#9C27B0" : "#ccc",
+                width: "100%",
+                cursor: folderName.trim() ? "pointer" : "not-allowed",
+              }}
+            >
+              Create Folder
+            </button>
+
+            {/* Folder Creation Result */}
+            {lastFolderResult && (
+              <div
+                style={{
+                  marginTop: "15px",
+                  padding: "10px",
+                  borderRadius: "6px",
+                  backgroundColor: lastFolderResult.error ? "#fee" : "#efe",
+                  border: `1px solid ${
+                    lastFolderResult.error ? "#fcc" : "#cfc"
+                  }`,
+                  fontSize: "12px",
+                }}
+              >
+                {lastFolderResult.error ? (
+                  <div style={{ color: "#d32f2f" }}>
+                    <strong>❌ Error:</strong> {lastFolderResult.error}
+                  </div>
+                ) : (
+                  <div style={{ color: "#2e7d32" }}>
+                    <div>
+                      <strong>✅ Folder Created Successfully!</strong>
+                    </div>
+                    <div>
+                      <strong>Name:</strong> {lastFolderResult.name}
+                    </div>
+                    <div>
+                      <strong>Folder ID:</strong> {lastFolderResult.folderID}
+                    </div>
+                    <div>
+                      <strong>Parent Folder:</strong>{" "}
+                      {lastFolderResult.parentFolderID}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Additional Information */}
       <div
         style={{
@@ -708,94 +1032,41 @@ function App() {
           )}
         </div>
 
-        {/* REST Commands Section */}
-        <div style={{ marginBottom: "30px" }}>
-          <h4>Create File Commands</h4>
-
-          {/* Create File with URL */}
-          <div style={sectionStyle}>
-            <h5>Create File from URL</h5>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr",
-                gap: "10px",
-                marginBottom: "15px",
-              }}
-            >
-              <input
-                type="url"
-                placeholder="Raw URL"
-                value={rawUrl}
-                onChange={(e) => setRawUrl(e.target.value)}
-                style={inputStyle}
-              />
-            </div>
-            <button
-              onClick={createFileCommand}
-              style={{
-                ...buttonStyle,
-                backgroundColor: "#4CAF50",
-                width: "100%",
-              }}
-            >
-              Create File from URL
-            </button>
-          </div>
-
-          {/* Create File with Data */}
-          <div style={sectionStyle}>
-            <h5>Create File from Local Data</h5>
-            <div style={{ marginBottom: "15px" }}>
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleFileSelect}
-                style={{ marginBottom: "10px" }}
-                accept="*/*"
-              />
-              <div
-                style={{
-                  fontSize: "11px",
-                  color: "#6c757d",
-                  marginBottom: "5px",
-                }}
-              >
-                Maximum file size: 10MB
-              </div>
-              {selectedFile && (
-                <div style={{ fontSize: "12px", color: "#6c757d" }}>
-                  Selected: {selectedFile.name} (
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)}MB)
-                  <div style={{ color: "#28a745", fontSize: "10px" }}>
-                    ✅ Within 10MB limit
-                  </div>
+        {/* Last Command Result */}
+        <div style={cardStyle}>
+          <h4 style={{ color: "#495057", marginTop: 0 }}>
+            Last Command Result
+          </h4>
+          {lastCommandResult ? (
+            <div>
+              {lastCommandResult.success ? (
+                <div style={{ color: "#28a745", marginBottom: "10px" }}>
+                  ✅ <strong>Success!</strong>
+                </div>
+              ) : (
+                <div style={{ color: "#dc3545", marginBottom: "10px" }}>
+                  ❌ <strong>Failed</strong>
                 </div>
               )}
+              <pre
+                style={{
+                  ...codeStyle,
+                  border: lastCommandResult.success
+                    ? "2px solid #4CAF50"
+                    : "2px solid #f44336",
+                  maxHeight: "200px",
+                  overflow: "auto",
+                }}
+              >
+                {JSON.stringify(lastCommandResult, null, 2)}
+              </pre>
             </div>
-            <button
-              onClick={createFileWithData}
-              disabled={!selectedFile}
-              style={{
-                ...buttonStyle,
-                backgroundColor: selectedFile ? "#FF9800" : "#ccc",
-                width: "100%",
-                cursor: selectedFile ? "pointer" : "not-allowed",
-              }}
-            >
-              Create File from Data
-            </button>
-          </div>
-
-          {/* REST Command Status */}
-          <div style={sectionStyle}>
-            <h5>REST Command Status</h5>
-            <div style={resultBoxStyle}>
-              <div style={{ color: "#6c757d", fontStyle: "italic" }}>
-                Check browser console for REST command responses
-              </div>
+          ) : (
+            <div style={{ color: "#6c757d", fontStyle: "italic" }}>
+              REST command results will appear here. Success/error alerts will
+              also appear for completed commands.
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
@@ -852,6 +1123,7 @@ const inputStyle = {
   border: "1px solid #ddd",
   borderRadius: "4px",
   fontSize: "14px",
+  width: "100%",
 };
 
 export default App;
