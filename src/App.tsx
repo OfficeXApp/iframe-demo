@@ -466,7 +466,14 @@ function App() {
       <div style={{ textAlign: "center", marginBottom: "30px" }}>
         <h1>OfficeX IFrame Integration Demo</h1>
       </div>
-
+      <a
+        href="https://github.com/OfficeXApp/iframe-demo"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ color: "white" }}
+      >
+        <p>View on GitHub</p>
+      </a>
       {/* Status Bar */}
       <div
         style={{
