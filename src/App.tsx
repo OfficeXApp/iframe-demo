@@ -97,8 +97,9 @@ function App() {
   const [showInjectedModal, setShowInjectedModal] = useState(false);
   const [injectedConfigJson, setInjectedConfigJson] = useState("");
   const [currentInitMode, setCurrentInitMode] = useState<
-    "ephemeral" | "injected" | null
+    "ephemeral" | "injected" | "grant-existing" | null
   >(null);
+  const [grantExistingTracer, setGrantExistingTracer] = useState<string>("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // File creation state
@@ -146,6 +147,61 @@ function App() {
   // Initialize default injected config JSON
   useEffect(() => {
     setInjectedConfigJson(JSON.stringify(defaultInjectedConfig, null, 2));
+  }, []);
+
+  // Check URL params on page load for grant-existing callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const apiKeyValue = urlParams.get("api_key_value");
+    const profileId = urlParams.get("profile_id");
+    const orgId = urlParams.get("org_id");
+    const endpoint = urlParams.get("endpoint");
+    const tracer = urlParams.get("tracer");
+
+    if (apiKeyValue && profileId && orgId) {
+      // We received credentials back from the grant-agentic-key page
+      const credentials = {
+        api_key_value: apiKeyValue,
+        profile_id: profileId,
+        org_id: orgId,
+        endpoint: endpoint || "",
+        tracer: tracer || "",
+      };
+
+      alert(
+        `Grant Existing Key Successful!\n\n` +
+          `API Key Value: ${credentials.api_key_value}\n` +
+          `Organization ID: ${credentials.org_id}\n` +
+          `Profile ID: ${credentials.profile_id}\n` +
+          `Endpoint: ${credentials.endpoint}\n` +
+          `Tracer: ${credentials.tracer}`
+      );
+
+      // Now initialize the iframe with these credentials
+      const injectedConfig: InjectedConfig = {
+        host: credentials.endpoint,
+        org_id: credentials.org_id,
+        org_name: "Granted Org",
+        profile_id: credentials.profile_id,
+        profile_name: "Granted Profile",
+        api_key_value: credentials.api_key_value,
+      };
+
+      // Clear the URL params
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Initialize with the granted credentials
+      setTimeout(() => {
+        setCurrentInitMode("grant-existing");
+        setInitializationAttempts((prev) => prev + 1);
+        const initData = { injected: injectedConfig };
+        sendMessageToIframe(
+          "officex-init",
+          initData,
+          "init-grant-existing-" + Date.now()
+        );
+      }, 1000);
+    }
   }, []);
 
   // Send message to iframe
@@ -201,6 +257,18 @@ function App() {
       console.error("JSON parse error:", error);
     }
   }, [injectedConfigJson, sendMessageToIframe]);
+
+  // Open grant-agentic-key page in new tab
+  const initializeGrantExisting = useCallback(() => {
+    const tracer = grantExistingTracer || `grant-${Date.now()}`;
+    const redirectUrl = window.location.origin;
+    const encodedRedirectUrl = encodeURIComponent(redirectUrl);
+    const grantUrl = `${iframeOrigin}/org/current/grant-agentic-key?tracer=${tracer}&redirect_url=${encodedRedirectUrl}`;
+
+    console.log("Opening grant-agentic-key page:", grantUrl);
+    window.open(grantUrl, "_blank");
+    setShowInitModal(false);
+  }, [grantExistingTracer]);
 
   // Navigate iframe to a specific route
   const navigateIframe = useCallback(
@@ -357,18 +425,24 @@ function App() {
     const now = new Date();
     console.log("IFrame loaded/refreshed at:", now.toISOString());
 
-    // Reset ready state when iframe loads/refreshes
-    setIframeReady(false);
-    setInitResponse(null);
-    setAboutResponse(null);
-    setAuthTokenResponse(null);
-    setLastRefreshTime(now);
-    setCurrentInitMode(null);
+    // Check if we're returning from grant-existing flow
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasGrantParams = urlParams.has("api_key_value");
 
-    // Show init modal after iframe loads
-    setTimeout(() => {
-      setShowInitModal(true);
-    }, 100);
+    if (!hasGrantParams) {
+      // Normal load - show init modal
+      setIframeReady(false);
+      setInitResponse(null);
+      setAboutResponse(null);
+      setAuthTokenResponse(null);
+      setLastRefreshTime(now);
+      setCurrentInitMode(null);
+
+      // Show init modal after iframe loads
+      setTimeout(() => {
+        setShowInitModal(true);
+      }, 100);
+    }
   }, []);
 
   // Handle messages from iframe
@@ -564,7 +638,7 @@ function App() {
               backgroundColor: "white",
               padding: "30px",
               borderRadius: "8px",
-              maxWidth: "500px",
+              maxWidth: "600px",
               width: "90%",
               boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
             }}
@@ -579,11 +653,19 @@ function App() {
               </p>
             </div>
 
-            <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                marginBottom: "20px",
+                flexWrap: "wrap",
+              }}
+            >
               <button
                 onClick={initializeEphemeral}
                 style={{
                   flex: 1,
+                  minWidth: "150px",
                   padding: "15px",
                   backgroundColor: "#4CAF50",
                   color: "white",
@@ -603,6 +685,7 @@ function App() {
                 }}
                 style={{
                   flex: 1,
+                  minWidth: "150px",
                   padding: "15px",
                   backgroundColor: "#2196F3",
                   color: "white",
@@ -612,17 +695,16 @@ function App() {
                   cursor: "pointer",
                 }}
               >
-                Injected Auth
+                Injected Mode
               </button>
 
               <button
-                onClick={() => {
-                  // window
-                }}
+                onClick={initializeGrantExisting}
                 style={{
                   flex: 1,
+                  minWidth: "150px",
                   padding: "15px",
-                  backgroundColor: "rgb(249 165 30)",
+                  backgroundColor: "#9C27B0",
                   color: "white",
                   border: "none",
                   borderRadius: "4px",
@@ -634,14 +716,46 @@ function App() {
               </button>
             </div>
 
+            {/* Tracer input for Grant Existing */}
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "5px",
+                  color: "#666",
+                  fontSize: "14px",
+                }}
+              >
+                Tracer ID (optional, for Grant Existing):
+              </label>
+              <input
+                type="text"
+                placeholder="e.g., abc123"
+                value={grantExistingTracer}
+                onChange={(e) => setGrantExistingTracer(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                  fontSize: "14px",
+                }}
+              />
+            </div>
+
             <div style={{ fontSize: "14px", color: "#666" }}>
               <p style={{ marginBottom: "10px" }}>
                 <strong>Ephemeral Mode:</strong> Creates a new organization and
                 profile using deterministic seeds.
               </p>
-              <p>
+              <p style={{ marginBottom: "10px" }}>
                 <strong>Injected Mode:</strong> Uses pre-existing organization
                 and profile IDs with optional API key.
+              </p>
+              <p>
+                <strong>Grant Existing:</strong> Opens OfficeX in a new tab to
+                grant access to an existing API key, then returns here with
+                credentials.
               </p>
             </div>
 
