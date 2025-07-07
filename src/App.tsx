@@ -41,7 +41,7 @@ interface CreateFileCommand {
     expires_at?: number;
     raw_url?: string;
     base64?: string;
-    parent_folder_uuid?: string; // Optional parent folder ID
+    parent_folder_uuid?: string;
   };
 }
 
@@ -56,17 +56,27 @@ interface CreateFolderCommand {
     shortcut_to?: string;
     external_id?: string;
     external_payload?: any;
-    parent_folder_uuid?: string; // Optional parent folder ID
+    parent_folder_uuid?: string;
   };
 }
 
-// type RestCommand = CreateFileCommand | CreateFolderCommand;
+// Init config types
+interface EphemeralConfig {
+  org_client_secret: string;
+  profile_client_secret: string;
+  org_name: string;
+  profile_name: string;
+}
 
-// interface RestCommandResponse {
-//   success: boolean;
-//   data?: any;
-//   error?: string;
-// }
+interface InjectedConfig {
+  host: string;
+  org_id: string;
+  org_name?: string;
+  profile_id: string;
+  profile_name?: string;
+  api_key_value?: string;
+  redirect_to?: string;
+}
 
 // Set a global-like variable for development mode
 const LOCAL_DEV_MODE = false;
@@ -83,28 +93,26 @@ function App() {
     useState<AuthTokenIFrameResponse | null>(null);
   const [initializationAttempts, setInitializationAttempts] = useState(0);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
+  const [showInitModal, setShowInitModal] = useState(false);
+  const [showInjectedModal, setShowInjectedModal] = useState(false);
+  const [injectedConfigJson, setInjectedConfigJson] = useState("");
+  const [currentInitMode, setCurrentInitMode] = useState<
+    "ephemeral" | "injected" | "grant-existing" | null
+  >(null);
+  const [grantExistingTracer, setGrantExistingTracer] = useState<string>("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // File creation state
-  const [
-    fileSize,
-    // setFileSize
-  ] = useState(1024);
+  const [fileSize] = useState(1024);
   const [rawUrl, setRawUrl] = useState("https://bitcoin.org/bitcoin.pdf");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileParentFolderId, setFileParentFolderId] = useState(""); // New: Optional parent folder ID for files
+  const [fileParentFolderId, setFileParentFolderId] = useState("");
 
   // Folder creation state
   const [folderName, setFolderName] = useState("My New Folder");
-  const [
-    folderLabels,
-    // setFolderLabels
-  ] = useState<LabelValue[]>([]);
-  const [
-    hasSovereignPermissions,
-    // setHasSovereignPermissions
-  ] = useState(false);
-  const [folderParentFolderId, setFolderParentFolderId] = useState(""); // New: Optional parent folder ID for folders
+  const [folderLabels] = useState<LabelValue[]>([]);
+  const [hasSovereignPermissions] = useState(false);
+  const [folderParentFolderId, setFolderParentFolderId] = useState("");
 
   // Command results state
   const [lastCommandResult, setLastCommandResult] = useState<any>(null);
@@ -117,28 +125,84 @@ function App() {
   const org_client_secret = useRef(`org-123abc`);
   const profile_client_secret = useRef(`profile-123xyz`);
 
-  // Store initialization config for reuse on refresh
-  const initConfig = useRef({
-    ephemeral: {
-      org_client_secret: org_client_secret.current,
-      profile_client_secret: profile_client_secret.current,
-      org_name: "Demo Org",
-      profile_name: "Demo Profile",
-    },
-  });
+  // Default configurations
+  const defaultEphemeralConfig: EphemeralConfig = {
+    org_client_secret: org_client_secret.current,
+    profile_client_secret: profile_client_secret.current,
+    org_name: "Demo Org",
+    profile_name: "Demo Profile",
+  };
 
-  // Helper function to generate the correct OfficeX URL
-  // const getOfficeXUrl = useCallback(() => {
-  //   if (!aboutResponse?.organization_id) {
-  //     return "https://officex.app"; // Fallback URL
-  //   }
+  const defaultInjectedConfig: InjectedConfig = {
+    host: "https://dzmre-qqaaa-aaaak-apdsa-cai.icp0.io",
+    org_id: "DriveID_dzmre-qqaaa-aaaak-apdsa-cai",
+    org_name: "Sponsored Org",
+    profile_id:
+      "UserID_7j2m5-n4wqc-5p5b6-3u7fz-z7j3a-qg77q-mi742-mpped-m7sdq-xpf2x-qae",
+    profile_name: "Sponsored Profile",
+    api_key_value: "", // only provide apiKey if you are subsidizing for users
+    redirect_to: "org/current/settings", // optional, default is the drive path
+  };
 
-  //   const orgId = aboutResponse.organization_id;
-  //   const baseUrl = LOCAL_DEV_MODE
-  //     ? "http://localhost:5173"
-  //     : aboutResponse.frontend_domain;
-  //   return `${baseUrl}/org/${orgId}__/drive`;
-  // }, [aboutResponse]);
+  // Initialize default injected config JSON
+  useEffect(() => {
+    setInjectedConfigJson(JSON.stringify(defaultInjectedConfig, null, 2));
+  }, []);
+
+  // Check URL params on page load for grant-existing callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const apiKeyValue = urlParams.get("api_key_value");
+    const profileId = urlParams.get("profile_id");
+    const orgId = urlParams.get("org_id");
+    const endpoint = urlParams.get("endpoint");
+    const tracer = urlParams.get("tracer");
+
+    if (apiKeyValue && profileId && orgId) {
+      // We received credentials back from the grant-agentic-key page
+      const credentials = {
+        api_key_value: apiKeyValue,
+        profile_id: profileId,
+        org_id: orgId,
+        endpoint: endpoint || "",
+        tracer: tracer || "",
+      };
+
+      alert(
+        `Grant Existing Key Successful!\n\n` +
+          `API Key Value: ${credentials.api_key_value}\n` +
+          `Organization ID: ${credentials.org_id}\n` +
+          `Profile ID: ${credentials.profile_id}\n` +
+          `Endpoint: ${credentials.endpoint}\n` +
+          `Tracer: ${credentials.tracer}`
+      );
+
+      // Now initialize the iframe with these credentials
+      const injectedConfig: InjectedConfig = {
+        host: credentials.endpoint,
+        org_id: credentials.org_id,
+        org_name: "Granted Org",
+        profile_id: credentials.profile_id,
+        profile_name: "Granted Profile",
+        api_key_value: credentials.api_key_value,
+      };
+
+      // Clear the URL params
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Initialize with the granted credentials
+      setTimeout(() => {
+        setCurrentInitMode("grant-existing");
+        setInitializationAttempts((prev) => prev + 1);
+        const initData = { injected: injectedConfig };
+        sendMessageToIframe(
+          "officex-init",
+          initData,
+          "init-grant-existing-" + Date.now()
+        );
+      }, 1000);
+    }
+  }, []);
 
   // Send message to iframe
   const sendMessageToIframe = useCallback(
@@ -160,16 +224,51 @@ function App() {
     []
   );
 
-  // Initialize iframe when it loads
-  const initializeIframe = useCallback(() => {
-    console.log("Initializing iframe...");
+  // Initialize iframe with ephemeral config
+  const initializeEphemeral = useCallback(() => {
+    console.log("Initializing iframe with ephemeral config...");
     setInitializationAttempts((prev) => prev + 1);
+    setCurrentInitMode("ephemeral");
+    const initData = { ephemeral: defaultEphemeralConfig };
     sendMessageToIframe(
       "officex-init",
-      initConfig.current,
-      "init-" + Date.now()
+      initData,
+      "init-ephemeral-" + Date.now()
     );
-  }, [sendMessageToIframe]);
+    setShowInitModal(false);
+  }, [sendMessageToIframe, defaultEphemeralConfig]);
+
+  // Initialize iframe with injected config
+  const initializeInjected = useCallback(() => {
+    try {
+      const parsedConfig = JSON.parse(injectedConfigJson);
+      console.log("Initializing iframe with injected config...");
+      setInitializationAttempts((prev) => prev + 1);
+      setCurrentInitMode("injected");
+      const initData = { injected: parsedConfig };
+      sendMessageToIframe(
+        "officex-init",
+        initData,
+        "init-injected-" + Date.now()
+      );
+      setShowInjectedModal(false);
+    } catch (error) {
+      alert("Invalid JSON format. Please check your configuration.");
+      console.error("JSON parse error:", error);
+    }
+  }, [injectedConfigJson, sendMessageToIframe]);
+
+  // Open grant-agentic-key page in new tab
+  const initializeGrantExisting = useCallback(() => {
+    const tracer = grantExistingTracer || `grant-${Date.now()}`;
+    const redirectUrl = window.location.origin;
+    const encodedRedirectUrl = encodeURIComponent(redirectUrl);
+    const grantUrl = `${iframeOrigin}/org/current/grant-agentic-key?tracer=${tracer}&redirect_url=${encodedRedirectUrl}`;
+
+    console.log("Opening grant-agentic-key page:", grantUrl);
+    window.open(grantUrl, "_blank");
+    setShowInitModal(false);
+  }, [grantExistingTracer]);
 
   // Navigate iframe to a specific route
   const navigateIframe = useCallback(
@@ -208,7 +307,6 @@ function App() {
       return;
     }
 
-    // Extract filename from URL
     const urlFileName = rawUrl.split("/").pop() || "downloaded-file";
 
     const command: CreateFileCommand = {
@@ -217,7 +315,7 @@ function App() {
         name: urlFileName,
         file_size: fileSize,
         raw_url: rawUrl,
-        parent_folder_uuid: fileParentFolderId || undefined, // Include optional parent folder ID
+        parent_folder_uuid: fileParentFolderId || undefined,
       },
     };
 
@@ -236,12 +334,10 @@ function App() {
     }
 
     try {
-      // Convert file to base64
       const base64Data = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
-          // Remove data:mime;base64, prefix
           const base64 = result.split(",")[1];
           resolve(base64);
         };
@@ -254,9 +350,9 @@ function App() {
         payload: {
           name: selectedFile.name,
           file_size: selectedFile.size,
-          raw_url: "", // Empty when using base64
+          raw_url: "",
           base64: base64Data,
-          parent_folder_uuid: fileParentFolderId || undefined, // Include optional parent folder ID
+          parent_folder_uuid: fileParentFolderId || undefined,
         },
       };
 
@@ -283,7 +379,7 @@ function App() {
         name: folderName,
         labels: folderLabels,
         has_sovereign_permissions: hasSovereignPermissions,
-        parent_folder_uuid: folderParentFolderId || undefined, // Include optional parent folder ID
+        parent_folder_uuid: folderParentFolderId || undefined,
       },
     };
 
@@ -312,7 +408,6 @@ function App() {
               2
             )}MB) exceeds the 50MB limit. Please select a smaller file.`
           );
-          // Clear the input
           if (fileInputRef.current) {
             fileInputRef.current.value = "";
           }
@@ -325,36 +420,34 @@ function App() {
     []
   );
 
-  // Handle iframe load event (fires on initial load AND refresh)
+  // Handle iframe load event
   const handleIframeLoad = useCallback(() => {
     const now = new Date();
     console.log("IFrame loaded/refreshed at:", now.toISOString());
 
-    // Reset ready state when iframe loads/refreshes
-    setIframeReady(false);
-    setInitResponse(null);
-    setAboutResponse(null);
-    setAuthTokenResponse(null);
-    setLastRefreshTime(now);
+    // Check if we're returning from grant-existing flow
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasGrantParams = urlParams.has("api_key_value");
 
-    // Initialize after a short delay to ensure iframe is fully ready
-    setTimeout(() => {
-      initializeIframe();
-    }, 100);
-  }, [initializeIframe]);
+    if (!hasGrantParams) {
+      // Normal load - show init modal
+      setIframeReady(false);
+      setInitResponse(null);
+      setAboutResponse(null);
+      setAuthTokenResponse(null);
+      setLastRefreshTime(now);
+      setCurrentInitMode(null);
 
-  // Retry initialization if it fails
-  const retryInitialization = useCallback(() => {
-    console.log("Retrying initialization...");
-    setTimeout(() => {
-      initializeIframe();
-    }, 2000);
-  }, [initializeIframe]);
+      // Show init modal after iframe loads
+      setTimeout(() => {
+        setShowInitModal(true);
+      }, 100);
+    }
+  }, []);
 
   // Handle messages from iframe
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // Validate origin for security (skip in local dev mode)
       if (!LOCAL_DEV_MODE && event.origin !== iframeOrigin) {
         console.warn("Received message from unknown origin:", event.origin);
         return;
@@ -367,7 +460,6 @@ function App() {
         tracer,
       });
 
-      // Handle different message types
       switch (type) {
         case "officex-init-response":
           if (data.success) {
@@ -378,13 +470,6 @@ function App() {
             setIframeReady(false);
             setInitResponse(data);
             console.error("IFrame initialization failed:", data.error);
-
-            // Retry initialization if it failed
-            if (initializationAttempts < 3) {
-              retryInitialization();
-            } else {
-              console.error("Max initialization attempts reached");
-            }
           }
           break;
 
@@ -419,10 +504,9 @@ function App() {
 
         case "officex-rest-command-response":
           console.log("REST command response:", data);
-          setLastCommandResult(data); // Store the last command result
+          setLastCommandResult(data);
           if (data.success) {
             console.log("REST command successful:", data.data);
-            // Store specific results for files and folders
             if (data.data.message?.includes("Folder")) {
               setLastFolderResult(data.data);
             } else if (data.data.message?.includes("File")) {
@@ -430,7 +514,6 @@ function App() {
             }
           } else {
             console.error("REST command failed:", data.error);
-            // Clear specific results on failure
             if (data.error?.includes("folder")) {
               setLastFolderResult({ error: data.error });
             } else {
@@ -452,13 +535,7 @@ function App() {
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [initializationAttempts, retryInitialization]);
-
-  // Manual initialization button (for testing)
-  const manualInit = useCallback(() => {
-    setInitializationAttempts(0);
-    initializeIframe();
-  }, [initializeIframe]);
+  }, []);
 
   return (
     <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
@@ -474,6 +551,7 @@ function App() {
       >
         <p>View on GitHub</p>
       </a>
+
       {/* Status Bar */}
       <div
         style={{
@@ -491,6 +569,7 @@ function App() {
         <div>
           <strong>Status:</strong>{" "}
           {iframeReady ? "✅ Ready" : "⏳ Not initialized"} |
+          <strong> Mode:</strong> {currentInitMode || "None"} |
           <strong> Attempts:</strong> {initializationAttempts} |
           {lastRefreshTime && (
             <span>
@@ -500,7 +579,7 @@ function App() {
           )}
         </div>
         <button
-          onClick={manualInit}
+          onClick={() => setShowInitModal(true)}
           style={{
             padding: "8px 16px",
             fontSize: "14px",
@@ -538,7 +617,277 @@ function App() {
         />
       </div>
 
-      {/* Controls & Results */}
+      {/* Init Modal */}
+      {showInitModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "30px",
+              borderRadius: "8px",
+              maxWidth: "600px",
+              width: "90%",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: "20px", color: "#333" }}>
+              Choose Initialization Mode
+            </h2>
+
+            <div style={{ marginBottom: "20px" }}>
+              <p style={{ color: "#666", marginBottom: "15px" }}>
+                Select how you want to initialize the OfficeX iframe:
+              </p>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                marginBottom: "20px",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                onClick={initializeEphemeral}
+                style={{
+                  flex: 1,
+                  minWidth: "150px",
+                  padding: "15px",
+                  backgroundColor: "#4CAF50",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                }}
+              >
+                Ephemeral Mode
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowInitModal(false);
+                  setShowInjectedModal(true);
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: "150px",
+                  padding: "15px",
+                  backgroundColor: "#2196F3",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                }}
+              >
+                Injected Mode
+              </button>
+
+              <button
+                onClick={initializeGrantExisting}
+                style={{
+                  flex: 1,
+                  minWidth: "150px",
+                  padding: "15px",
+                  backgroundColor: "#9C27B0",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                }}
+              >
+                Grant Existing
+              </button>
+            </div>
+
+            {/* Tracer input for Grant Existing */}
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "5px",
+                  color: "#666",
+                  fontSize: "14px",
+                }}
+              >
+                Tracer ID (optional, for Grant Existing):
+              </label>
+              <input
+                type="text"
+                placeholder="e.g., abc123"
+                value={grantExistingTracer}
+                onChange={(e) => setGrantExistingTracer(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                  fontSize: "14px",
+                }}
+              />
+            </div>
+
+            <div style={{ fontSize: "14px", color: "#666" }}>
+              <p style={{ marginBottom: "10px" }}>
+                <strong>Ephemeral Mode:</strong> Creates a new organization and
+                profile using deterministic seeds.
+              </p>
+              <p style={{ marginBottom: "10px" }}>
+                <strong>Injected Mode:</strong> Uses pre-existing organization
+                and profile IDs with optional API key.
+              </p>
+              <p>
+                <strong>Grant Existing:</strong> Opens OfficeX in a new tab to
+                grant access to an existing API key, then returns here with
+                credentials.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowInitModal(false)}
+              style={{
+                marginTop: "20px",
+                padding: "10px 20px",
+                backgroundColor: "#6c757d",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                fontSize: "14px",
+                cursor: "pointer",
+                width: "100%",
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Injected Config Modal */}
+      {showInjectedModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "30px",
+              borderRadius: "8px",
+              maxWidth: "600px",
+              width: "90%",
+              maxHeight: "80vh",
+              overflowY: "auto",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: "20px", color: "#333" }}>
+              Injected Configuration
+            </h2>
+
+            <div style={{ marginBottom: "20px" }}>
+              <p style={{ color: "#666", marginBottom: "15px" }}>
+                Edit the JSON configuration below to inject your own
+                organization and profile settings:
+              </p>
+            </div>
+
+            <textarea
+              value={injectedConfigJson}
+              onChange={(e) => setInjectedConfigJson(e.target.value)}
+              style={{
+                width: "100%",
+                height: "300px",
+                padding: "10px",
+                fontFamily: "monospace",
+                fontSize: "14px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                marginBottom: "20px",
+              }}
+            />
+
+            <div
+              style={{ fontSize: "12px", color: "#666", marginBottom: "20px" }}
+            >
+              <p>
+                <strong>Note:</strong>
+              </p>
+              <ul style={{ marginTop: "5px", paddingLeft: "20px" }}>
+                <li>
+                  api_key_value is only required if creating a new profile
+                </li>
+                <li>redirect_to is optional (defaults to drive path)</li>
+                <li>Leave api_key_value empty if the profile already exists</li>
+              </ul>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                onClick={initializeInjected}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  backgroundColor: "#2196F3",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                }}
+              >
+                Initialize with Injected Config
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowInjectedModal(false);
+                  setShowInitModal(true);
+                }}
+                style={{
+                  padding: "12px 20px",
+                  backgroundColor: "#6c757d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                }}
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Controls & Results - Rest of the component remains the same */}
       {iframeReady && (
         <div style={{ marginBottom: "30px" }}>
           <h3>Controls & Results</h3>
@@ -569,20 +918,6 @@ function App() {
               >
                 Go to Settings
               </button>
-              {/* <a
-                href={getOfficeXUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <button style={{ ...buttonStyle, backgroundColor: "#2196F3" }}>
-                  Open OfficeX in new tab
-                  {!aboutResponse?.organization_id && (
-                    <span style={{ fontSize: "10px", display: "block" }}>
-                      (Get About Info first)
-                    </span>
-                  )}
-                </button>
-              </a> */}
             </div>
           </div>
 
@@ -649,7 +984,6 @@ function App() {
                           {aboutResponse.endpoint}
                         </div>
                       )}
-                      {/* frontend domain */}
                       {aboutResponse.frontend_domain && (
                         <div>
                           <strong style={{ color: "#212529" }}>
@@ -659,23 +993,6 @@ function App() {
                         </div>
                       )}
                     </div>
-                    {/* <div
-                      style={{
-                        marginTop: "10px",
-                        padding: "8px",
-                        backgroundColor: "#e3f2fd",
-                        borderRadius: "4px",
-                        fontSize: "11px",
-                      }}
-                    >
-                      <strong style={{ color: "#1976d2" }}>
-                        Generated URL:
-                      </strong>
-                      <br />
-                      <code style={{ wordBreak: "break-all" }}>
-                        {getOfficeXUrl()}
-                      </code>
-                    </div> */}
                   </div>
                 ) : (
                   <div style={{ color: "#6c757d", fontStyle: "italic" }}>
@@ -878,7 +1195,7 @@ function App() {
                     Selected: {selectedFile.name} (
                     {(selectedFile.size / 1024 / 1024).toFixed(2)}MB)
                     <div style={{ color: "#28a745", fontSize: "10px" }}>
-                      ✅ Within 10MB limit
+                      ✅ Within 50MB limit
                     </div>
                   </div>
                 )}
@@ -1064,13 +1381,21 @@ function App() {
               {LOCAL_DEV_MODE ? "Yes" : "No"}
             </div>
             <div>
-              <strong style={{ color: "#212529" }}>Org Secret:</strong>{" "}
-              {org_client_secret.current}
+              <strong style={{ color: "#212529" }}>Init Mode:</strong>{" "}
+              {currentInitMode || "None"}
             </div>
-            <div>
-              <strong style={{ color: "#212529" }}>Profile Secret:</strong>{" "}
-              {profile_client_secret.current}
-            </div>
+            {currentInitMode === "ephemeral" && (
+              <>
+                <div>
+                  <strong style={{ color: "#212529" }}>Org Secret:</strong>{" "}
+                  {org_client_secret.current}
+                </div>
+                <div>
+                  <strong style={{ color: "#212529" }}>Profile Secret:</strong>{" "}
+                  {profile_client_secret.current}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
