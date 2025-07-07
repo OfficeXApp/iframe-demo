@@ -612,7 +612,25 @@ function App() {
                   cursor: "pointer",
                 }}
               >
-                Injected Mode
+                Injected Auth
+              </button>
+
+              <button
+                onClick={() => {
+                  // window
+                }}
+                style={{
+                  flex: 1,
+                  padding: "15px",
+                  backgroundColor: "rgb(249 165 30)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                }}
+              >
+                Grant Existing
               </button>
             </div>
 
