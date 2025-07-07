@@ -33,15 +33,19 @@ The iFrame integration allows drop-in UI for OfficeX, orgs+profiles scoped by de
       org_name: "your-org-name", // this can be an arbitrary string
       profile_name: "your-profile-name", // this can be an arbitrary string
     },
-    cloud: {
-      // if using existing cloud, the child iframe will check if the user has approved the connection (allowlist the host domain - the allowlist lives in officex drive ui indexdb identity framework, pure clientside)
-      // if using existing cloud is not provided, the child iframe will issue a popup to allow parent domain to add this org+profile to your officex
+    injected: {
       host: "your-custom-backend", // this can be an arbitrary string
       orgID: "your-drive-id", // this can be an arbitrary string
       profileID: "your-profile-id", // this can be an arbitrary string
-      // only provide apiKey if you are subsidizing for users
-      apiKey: "your-api-key", // omit if you are using their existing profile
+      apiKey: "your-api-key", // only provide apiKey if you are subsidizing for users
+      redirectTo?: "org/current/drive" // optional, default is the drive path
     },
+    // existing: {
+    //     // shows ui page asking user to approve connection, and select api key to give parent app access to
+    //   orgID: "your-drive-id", // this can be an arbitrary string
+    //   profileID: "your-profile-id", // this can be an arbitrary string
+    //   redirectTo?: "org/current/drive" // optional, default is the drive path
+    // }
   };
 
   // Function to initialize the iframe

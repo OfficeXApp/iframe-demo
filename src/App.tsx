@@ -69,7 +69,7 @@ interface CreateFolderCommand {
 // }
 
 // Set a global-like variable for development mode
-const LOCAL_DEV_MODE = false;
+const LOCAL_DEV_MODE = true;
 const iframeOrigin = LOCAL_DEV_MODE
   ? "http://localhost:5173"
   : "https://drive.officex.app";
@@ -119,11 +119,21 @@ function App() {
 
   // Store initialization config for reuse on refresh
   const initConfig = useRef({
-    ephemeral: {
-      org_client_secret: org_client_secret.current,
-      profile_client_secret: profile_client_secret.current,
-      org_name: "Demo Org",
-      profile_name: "Demo Profile",
+    // ephemeral: {
+    //   org_client_secret: org_client_secret.current,
+    //   profile_client_secret: profile_client_secret.current,
+    //   org_name: "Demo Org",
+    //   profile_name: "Demo Profile",
+    // },
+    injected: {
+      host: "https://dzmre-qqaaa-aaaak-apdsa-cai.icp0.io",
+      org_id: "DriveID_dzmre-qqaaa-aaaak-apdsa-cai",
+      org_name: "Sponsored Org",
+      profile_id:
+        "UserID_7j2m5-n4wqc-5p5b6-3u7fz-z7j3a-qg77q-mi742-mpped-m7sdq-xpf2x-qae",
+      profile_name: "Sponsored Profile",
+      api_key_value: "", // only provide apiKey if you are subsidizing for users
+      redirect_to: "org/current/settings", // optional, default is the drive path
     },
   });
 
