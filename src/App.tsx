@@ -82,7 +82,7 @@ interface InjectedConfig {
 const LOCAL_DEV_MODE = false;
 const iframeOrigin = LOCAL_DEV_MODE
   ? "http://localhost:5173"
-  : "https://drive.officex.app";
+  : "https://officex.app";
 
 function App() {
   const [iframeReady, setIframeReady] = useState(false);

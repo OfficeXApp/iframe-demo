@@ -17,7 +17,7 @@ The iFrame integration allows drop-in UI for OfficeX, orgs+profiles scoped by de
 <h1>Parent Document</h1>
 <iframe
   id="officex-iframe"
-  src="https://drive.officex.app"
+  src="https://officex.app"
   width="100%"
   height="600px"
 ></iframe>
@@ -71,7 +71,7 @@ The iFrame integration allows drop-in UI for OfficeX, orgs+profiles scoped by de
   // Listen for messages from IFrame
   window.addEventListener("message", (event) => {
     // Validate origin for security
-    // if (event.origin !== "https://drive.officex.app") return;
+    // if (event.origin !== "https://officex.app") return;
 
     const { type, data, tracer } = event.data;
 
