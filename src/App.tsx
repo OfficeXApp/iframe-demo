@@ -11,19 +11,20 @@ interface IFrameMessage {
 // About Child IFrame Instance response type
 interface AboutChildIFrameInstanceResponse {
   organization_name: string;
-  organization_id: string;
-  profile_id: string;
+  drive_id: string;
+  user_id: string;
   profile_name: string;
-  endpoint?: string;
+  host?: string;
   frontend_domain?: string;
 }
 
 // Auth Token response type
 interface AuthTokenIFrameResponse {
-  organization_id: string;
-  profile_id: string;
-  endpoint?: string;
-  auth_token: string;
+  drive_id: string;
+  user_id: string;
+  host?: string;
+  api_key_value: string;
+  tracer?: string;
 }
 
 // Label type definition
@@ -70,16 +71,16 @@ interface EphemeralConfig {
 
 interface InjectedConfig {
   host: string;
-  org_id: string;
+  drive_id: string;
   org_name?: string;
-  profile_id: string;
+  user_id: string;
   profile_name?: string;
   api_key_value?: string;
   redirect_to?: string;
 }
 
 // Set a global-like variable for development mode
-const LOCAL_DEV_MODE = false;
+const LOCAL_DEV_MODE = true;
 const iframeOrigin = LOCAL_DEV_MODE
   ? "http://localhost:5173"
   : "https://officex.app";
@@ -134,13 +135,15 @@ function App() {
   };
 
   const defaultInjectedConfig: InjectedConfig = {
-    host: "https://dzmre-qqaaa-aaaak-apdsa-cai.icp0.io",
-    org_id: "DriveID_dzmre-qqaaa-aaaak-apdsa-cai",
-    org_name: "Sponsored Org",
-    profile_id:
-      "UserID_7j2m5-n4wqc-5p5b6-3u7fz-z7j3a-qg77q-mi742-mpped-m7sdq-xpf2x-qae",
-    profile_name: "Sponsored Profile",
-    api_key_value: "", // only provide apiKey if you are subsidizing for users
+    host: "https://officex.otterpad.cc",
+    drive_id:
+      "DriveID_4abun-64mwg-53k6h-ux7ti-3zozv-a64ij-l4nww-tsrbt-o7h5m-olm2y-wqe",
+    org_name: "Real Actual Org",
+    user_id:
+      "UserID_sj4ab-foztr-kpjac-rguws-p2ykc-fi7pp-4ngiv-ablu5-at5af-gmavh-rae",
+    profile_name: "Anon",
+    api_key_value:
+      "eyJhdXRoX3R5cGUiOiJBUElfS0VZIiwidmFsdWUiOiJkYWQxYTg4MzU0MTBjYzE5ODdjZGI4ODNmYWViYmNjNGQ5NjE1ZGZkMTM0NTFkZDUxZTIzYTE3YWJhNjNjMzczIn0=", // only provide apiKey if you are subsidizing for users
     redirect_to: "org/current/settings", // optional, default is the drive path
   };
 
@@ -153,36 +156,36 @@ function App() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const apiKeyValue = urlParams.get("api_key_value");
-    const profileId = urlParams.get("profile_id");
-    const orgId = urlParams.get("org_id");
-    const endpoint = urlParams.get("endpoint");
+    const profileId = urlParams.get("user_id");
+    const orgId = urlParams.get("drive_id");
+    const host = urlParams.get("host");
     const tracer = urlParams.get("tracer");
 
     if (apiKeyValue && profileId && orgId) {
       // We received credentials back from the grant-agentic-key page
       const credentials = {
         api_key_value: apiKeyValue,
-        profile_id: profileId,
-        org_id: orgId,
-        endpoint: endpoint || "",
+        user_id: profileId,
+        drive_id: orgId,
+        host: host || "",
         tracer: tracer || "",
       };
 
       alert(
         `Grant Existing Key Successful!\n\n` +
-          `API Key Value: ${credentials.api_key_value}\n` +
-          `Organization ID: ${credentials.org_id}\n` +
-          `Profile ID: ${credentials.profile_id}\n` +
-          `Endpoint: ${credentials.endpoint}\n` +
+          `Api Key Value: ${credentials.api_key_value}\n` +
+          `Drive ID: ${credentials.drive_id}\n` +
+          `User ID: ${credentials.user_id}\n` +
+          `Host: ${credentials.host}\n` +
           `Tracer: ${credentials.tracer}`
       );
 
       // Now initialize the iframe with these credentials
       const injectedConfig: InjectedConfig = {
-        host: credentials.endpoint,
-        org_id: credentials.org_id,
+        host: credentials.host,
+        drive_id: credentials.drive_id,
         org_name: "Granted Org",
-        profile_id: credentials.profile_id,
+        user_id: credentials.user_id,
         profile_name: "Granted Profile",
         api_key_value: credentials.api_key_value,
       };
@@ -964,7 +967,7 @@ function App() {
                       </div>
                       <div>
                         <strong style={{ color: "#212529" }}>Org ID:</strong>{" "}
-                        {aboutResponse.organization_id}
+                        {aboutResponse.drive_id}
                       </div>
                       <div>
                         <strong style={{ color: "#212529" }}>Profile:</strong>{" "}
@@ -974,14 +977,12 @@ function App() {
                         <strong style={{ color: "#212529" }}>
                           Profile ID:
                         </strong>{" "}
-                        {aboutResponse.profile_id}
+                        {aboutResponse.user_id}
                       </div>
-                      {aboutResponse.endpoint && (
+                      {aboutResponse.host && (
                         <div>
-                          <strong style={{ color: "#212529" }}>
-                            Endpoint:
-                          </strong>{" "}
-                          {aboutResponse.endpoint}
+                          <strong style={{ color: "#212529" }}>Host:</strong>{" "}
+                          {aboutResponse.host}
                         </div>
                       )}
                       {aboutResponse.frontend_domain && (
@@ -1036,20 +1037,20 @@ function App() {
                     >
                       <div>
                         <strong style={{ color: "#212529" }}>Org ID:</strong>{" "}
-                        {authTokenResponse.organization_id}
+                        {authTokenResponse.drive_id}
                       </div>
                       <div>
                         <strong style={{ color: "#212529" }}>
                           Profile ID:
                         </strong>{" "}
-                        {authTokenResponse.profile_id}
+                        {authTokenResponse.user_id}
                       </div>
-                      {authTokenResponse.endpoint && (
+                      {authTokenResponse.host && (
                         <div>
                           <strong style={{ color: "#212529" }}>
                             Endpoint:
                           </strong>{" "}
-                          {authTokenResponse.endpoint}
+                          {authTokenResponse.host}
                         </div>
                       )}
                     </div>
@@ -1065,13 +1066,13 @@ function App() {
                           marginTop: "5px",
                         }}
                       >
-                        {authTokenResponse.auth_token}
+                        {authTokenResponse.api_key_value}
                       </div>
                     </div>
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(
-                          authTokenResponse.auth_token
+                          authTokenResponse.api_key_value
                         );
                         alert("Auth token copied to clipboard!");
                       }}
