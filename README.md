@@ -11,6 +11,11 @@ The iFrame integration allows drop-in UI for OfficeX, orgs+profiles scoped by de
 
 ## Basic Setup
 
+```sh
+npm install
+npm run dev
+```
+
 ### Parent POV
 
 ```html
