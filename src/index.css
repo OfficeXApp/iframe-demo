@@ -66,3 +66,76 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Add this to your existing App.css file */
+
+.code-container {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.code-header h3 {
+  margin: 0;
+  color: white;
+}
+
+.copy-button {
+  padding: 8px 16px;
+  background-color: #2196f3; /* A nice blue color */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.copy-button:hover {
+  background-color: #0b7dda; /* Darker blue on hover */
+}
+
+.code-textarea {
+  width: 100%;
+  height: 250px;
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  padding: 1rem;
+  resize: none;
+  font-family: monospace;
+  box-sizing: border-box; /* Ensure padding is included in the element's total width and height */
+}
+
+/* Container styling */
+.examples-appendix {
+  margin-top: 64px;
+}
+
+/* Table styling */
+.examples-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.examples-table thead tr {
+  background-color: #333;
+  color: white;
+}
+
+.examples-table th,
+.examples-table td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+/* Zebra-striping for even rows */
+.examples-table tbody tr:nth-child(even) {
+  background-color: #2d2d2d;
+}

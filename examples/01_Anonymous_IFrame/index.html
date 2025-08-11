@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OfficeX Ephemeral IFrame Demo</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background-color: #121212;
+        color: #e0e0e0;
+        margin: 2rem;
+      }
+      h1 {
+        color: #ffffff;
+      }
+      .code-container {
+        margin-bottom: 1.5rem;
+        position: relative;
+      }
+      #code-snippet {
+        width: 100%;
+        height: 250px;
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+        border: 1px solid #444;
+        padding: 1rem;
+        resize: none;
+        box-sizing: border-box;
+      }
+      .copy-button {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background-color: #444;
+        color: #fff;
+        border: none;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        font-family: sans-serif;
+      }
+      .iframe-container {
+        border: 1px solid #444;
+        padding: 1rem;
+        background-color: #1e1e1e;
+        /* Adjusting iframe container height to be more dynamic */
+        height: calc(100vh - 400px);
+        min-height: 500px;
+      }
+      #officex-iframe-display {
+        width: 100%;
+        height: 100%; /* Iframe now fills its container */
+        border: none;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>OfficeX Anonymous IFrame</h1>
+    <div class="code-container">
+      <button class="copy-button" onclick="copyCode()">Copy Code</button>
+      <textarea id="code-snippet" readonly>
+<div class="iframe-container">
+  <iframe
+    id="officex-iframe"
+    src="https://officex.app/org/current/drive/BROWSER_CACHE/DiskID_offline-local-browser-cache/FolderID_root-folder-offline-local-browser-cache/"
+    sandbox="allow-same-origin allow-scripts allow-downloads allow-popups"
+  ></iframe>
+  <script>
+    const iframeElement = document.getElementById("officex-iframe");
+
+    iframeElement.onload = () => {
+      const ephemeralConfig = {
+        org_client_secret: `org-123abc-${Date.now()}`,
+        profile_client_secret: `profile-123xyz-${Date.now()}`,
+        org_name: "Anonymous Demo Org",
+        profile_name: "Anonymous Demo Profile",
+      };
+
+      const initData = { ephemeral: ephemeralConfig };
+
+      iframeElement.contentWindow.postMessage(
+        {
+          type: "officex-init",
+          data: initData,
+          tracer: `init-ephemeral-${Date.now()}`,
+        },
+        "https://officex.app"
+      );
+    };
+  </script>
+</div></textarea
+      >
+    </div>
+
+    <div class="iframe-container">
+      <iframe
+        id="officex-iframe-display"
+        src="https://officex.app/org/current/drive/BROWSER_CACHE/DiskID_offline-local-browser-cache/FolderID_root-folder-offline-local-browser-cache/"
+        sandbox="allow-same-origin allow-scripts allow-downloads allow-popups"
+      ></iframe>
+      <script>
+        function copyCode() {
+          const textarea = document.getElementById("code-snippet");
+          textarea.select();
+          document.execCommand("copy");
+          alert("Code copied to clipboard!");
+        }
+
+        // Iframe initialization for the display iframe
+        const iframeElementDisplay = document.getElementById(
+          "officex-iframe-display"
+        );
+
+        iframeElementDisplay.onload = () => {
+          const ephemeralConfig = {
+            org_client_secret: `org-123abc-${Date.now()}`,
+            profile_client_secret: `profile-123xyz-${Date.now()}`,
+            org_name: "Anonymous Demo Org",
+            profile_name: "Anonymous Demo Profile",
+          };
+
+          const initData = { ephemeral: ephemeralConfig };
+
+          iframeElementDisplay.contentWindow.postMessage(
+            {
+              type: "officex-init",
+              data: initData,
+              tracer: `init-ephemeral-${Date.now()}`,
+            },
+            "https://officex.app"
+          );
+        };
+      </script>
+    </div>
+  </body>
+</html>

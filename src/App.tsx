@@ -80,7 +80,7 @@ interface InjectedConfig {
 }
 
 // Set a global-like variable for development mode
-const LOCAL_DEV_MODE = true;
+const LOCAL_DEV_MODE = false;
 const iframeOrigin = LOCAL_DEV_MODE
   ? "http://localhost:5173"
   : "https://officex.app";
@@ -137,13 +137,13 @@ function App() {
   const defaultInjectedConfig: InjectedConfig = {
     host: "https://officex.otterpad.cc",
     drive_id:
-      "DriveID_4abun-64mwg-53k6h-ux7ti-3zozv-a64ij-l4nww-tsrbt-o7h5m-olm2y-wqe",
-    org_name: "Real Actual Org",
+      "DriveID_sl2pa-g7ejf-ahwxr-flqz3-2szt4-34thc-tcw5n-jncrp-zpt4j-5c5wk-vqe",
+    org_name: "Actual Real Org",
     user_id:
-      "UserID_sj4ab-foztr-kpjac-rguws-p2ykc-fi7pp-4ngiv-ablu5-at5af-gmavh-rae",
+      "UserID_fz3np-hc2vm-kalep-yrtgj-fcg5p-5iae7-edoka-z2rjj-4cgbr-xjl4d-gqe",
     profile_name: "Anon",
     api_key_value:
-      "eyJhdXRoX3R5cGUiOiJBUElfS0VZIiwidmFsdWUiOiJkYWQxYTg4MzU0MTBjYzE5ODdjZGI4ODNmYWViYmNjNGQ5NjE1ZGZkMTM0NTFkZDUxZTIzYTE3YWJhNjNjMzczIn0=", // only provide apiKey if you are subsidizing for users
+      "eyJhdXRoX3R5cGUiOiJBUElfS0VZIiwidmFsdWUiOiIwZjQ2YTUzZWM4MTU3NzkxNjhkNmRlZmY5ZWQ1ZjYzZTg3MDBiODMwYzMyNzgwZmM0OTJmZjg4YjNmNjY0NTY4In0=", // only provide apiKey if you are subsidizing for users
     redirect_to: "org/current/settings", // optional, default is the drive path
   };
 
@@ -554,6 +554,62 @@ function App() {
       >
         <p>View on GitHub</p>
       </a>
+
+      {/* Ephemeral IFrame Code Snippet */}
+      <div className="code-container">
+        <div className="code-header">
+          <h3>Easy 2 min iFrame</h3>
+          <button
+            className="copy-button"
+            onClick={() => {
+              const codeElement = document.getElementById(
+                "ephemeral-code-snippet"
+              ) as HTMLTextAreaElement;
+              if (codeElement) {
+                navigator.clipboard.writeText(codeElement.value);
+                alert("Code copied to clipboard! ✅");
+              }
+            }}
+          >
+            Copy Code
+          </button>
+        </div>
+        <textarea
+          id="ephemeral-code-snippet"
+          className="code-textarea"
+          readOnly
+          value={`<div>
+  <iframe
+    id="officex-iframe"
+    src="https://officex.app/org/current/drive/BROWSER_CACHE/DiskID_offline-local-browser-cache/FolderID_root-folder-offline-local-browser-cache/"
+    sandbox="allow-same-origin allow-scripts allow-downloads allow-popups"
+  ></iframe>
+  <script>
+    const iframeElement = document.getElementById("officex-iframe");
+
+    iframeElement.onload = () => {
+      const ephemeralConfig = {
+        org_client_secret: \`org-123abc-\${Date.now()}\`,
+        profile_client_secret: \`profile-123xyz-\${Date.now()}\`,
+        org_name: "Ephemeral Demo Org",
+        profile_name: "Ephemeral Demo Profile",
+      };
+
+      const initData = { ephemeral: ephemeralConfig };
+
+      iframeElement.contentWindow.postMessage(
+        {
+          type: "officex-init",
+          data: initData,
+          tracer: \`init-ephemeral-\${Date.now()}\`,
+        },
+        "https://officex.app"
+      );
+    };
+  </script>
+</div>`}
+        />
+      </div>
 
       {/* Status Bar */}
       <div
@@ -1458,6 +1514,36 @@ function App() {
           )}
         </div>
       </div>
+
+      <div style={{ marginTop: "64px", width: "100%" }}>
+        <h2>Examples Appendix</h2>
+        <table className="examples-table">
+          <thead>
+            <tr>
+              <th>Use Case</th>
+              <th>Description</th>
+              <th>GitHub Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            {EXAMPLES.map((example, index) => (
+              <tr key={index}>
+                <td>{example.title}</td>
+                <td>{example.description}</td>
+                <td>
+                  <a
+                    href={example.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Github Example
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -1516,3 +1602,59 @@ const inputStyle = {
 };
 
 export default App;
+
+const EXAMPLES = [
+  {
+    title: "Anonymous iframe",
+    description:
+      "Give your users a file management UI without code. Pure clientside, with offline capabilities and free cloud. Easy to integrate in 2 mins. Ideal for quick prototypes or adding basic file features to any website without a backend.",
+    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+  },
+  {
+    title: "Single Use Tools",
+    description: `Eg. YouTube downloaders, PDF generators, file converters...etc. Give your users a clean, robust clientside UI for file management & offline storage. Perfect for tools that need to process files securely and locally without a user account.`,
+    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+  },
+  {
+    title: "Community Platforms",
+    description:
+      "Eg. Competitors to Discord, Reddit, Farcaster, etc. Give your communities a full digital storage experience without leaving your platform. Community files and folders, permissions to users & groups, clean modern UI. Full developer REST API available, 100% open source self-hostable, whitelabel.",
+    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+  },
+  {
+    title: "Workplace Tools",
+    description:
+      "Eg. Competitors to Adobe, Upwork, Zapier, Protonmail, CRMs, etc. Give your professionals a full digital storage experience without leaving your platform. Integrate file management, version control, and collaboration tools directly into your professional-grade software. Full developer REST API available, 100% open source self-hostable, whitelabel.",
+    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+  },
+  {
+    title: "Online Education",
+    description:
+      "Eg. Running your own online course, bootcamp, cohort based learning platform, etc. Provide a private, secure space for students and instructors to share course materials, submit assignments, and collaborate on projects.",
+    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+  },
+  {
+    title: "Chrome Extensions",
+    description:
+      "Eg. Competitors to Loom screen recorder, tweet generators, etc. Use OfficeX as a local or cloud storage backend for your extension, enabling users to manage recordings, generated content, or other files directly from their browser.",
+    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+  },
+  {
+    title: "AI Agents",
+    description:
+      "Eg. ChatGPT, DeepSeek, Claude, etc. Enable AI agents to interact with user-managed files, allowing them to summarize documents, generate content based on local data, or perform actions on files stored in a user's private space.",
+    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+  },
+  {
+    title: "Self-Hosting for Enterprise",
+    description:
+      "Eg. Schools, Agencies, Governments, etc. Provide a 100% open-source, customizable, and self-hostable file solution to maintain full control over sensitive data, meet compliance requirements, and reduce reliance on third-party cloud providers.",
+    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+  },
+  {
+    title: "Self-Hosting for Personal",
+    description:
+      "Eg. Home, Family, Privacy, etc. Offer a private and secure self-hosted solution for families and individuals to manage their files, photos, and personal data without worrying about corporate data harvesting or privacy concerns.",
+    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+  },
+];
