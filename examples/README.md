@@ -1,5 +1,8 @@
 ### Examples Appendix
 
+Try the bulk action scripts on codesandbox:
+https://codesandbox.io/p/sandbox/554k66
+
 | Use Case                                                             | Description                                                                                                                                                                                                                                                                                                                                                  | GitHub Example                                                            |
 | :------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------ |
 | [Anonymous iframe](./examples/01_Anonymous_Iframe)                   | Give your users a file management UI without code. Pure clientside, with offline capabilities and free cloud. Easy to integrate in 2 mins. Ideal for quick prototypes or adding basic file features to any website without a backend.                                                                                                                        | [Github Example](https://github.com/OfficeXApp/iframe-demo/tree/main/src) |

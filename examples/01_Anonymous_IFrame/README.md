@@ -1,5 +1,7 @@
 # Anonymous IFrame
 
+Give your users a file management UI without code. Pure clientside, with offline capabilities and free cloud. Easy to integrate in 2 mins. Ideal for quick prototypes or adding basic file features to any website without a backend.
+
 This example shows how to initialize an anonymous IFrame with OfficeX in pure HTML. Simply copy paste the below code into any HTML file inside your `<body>`
 
 ```html
