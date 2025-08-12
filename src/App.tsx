@@ -442,9 +442,9 @@ function App() {
       setCurrentInitMode(null);
 
       // Show init modal after iframe loads
-      setTimeout(() => {
-        setShowInitModal(true);
-      }, 100);
+      // setTimeout(() => {
+      //   setShowInitModal(true);
+      // }, 100);
     }
   }, []);
 
@@ -945,578 +945,607 @@ function App() {
           </div>
         </div>
       )}
+      <div style={{ marginTop: "12px", width: "100%", marginBottom: "100px" }}>
+        <details>
+          <summary>iFrame Controls</summary>
+          {/* Controls & Results - Rest of the component remains the same */}
+          {iframeReady && (
+            <div style={{ marginBottom: "30px" }}>
+              <h3>Controls & Results</h3>
 
-      {/* Controls & Results - Rest of the component remains the same */}
-      {iframeReady && (
-        <div style={{ marginBottom: "30px" }}>
-          <h3>Controls & Results</h3>
-
-          {/* Navigation Controls */}
-          <div style={{ marginBottom: "30px" }}>
-            <h4>Navigation</h4>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-                gap: "10px",
-              }}
-            >
-              <button
-                onClick={() =>
-                  navigateIframe(
-                    "org/current/drive/BROWSER_CACHE/DiskID_offline-local-browser-cache/FolderID_root-folder-offline-local-browser-cache/"
-                  )
-                }
-                style={{ ...buttonStyle, backgroundColor: "#2196F3" }}
-              >
-                Go to Files (Storage Drive)
-              </button>
-              <button
-                onClick={() => navigateIframe("org/current/settings")}
-                style={{ ...buttonStyle, backgroundColor: "#2196F3" }}
-              >
-                Go to Settings
-              </button>
-            </div>
-          </div>
-
-          {/* Information Controls */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
-              gap: "20px",
-              marginBottom: "30px",
-            }}
-          >
-            {/* About Info Section */}
-            <div style={sectionStyle}>
-              <button
-                onClick={getAboutChildIFrameInstance}
-                style={{
-                  ...buttonStyle,
-                  backgroundColor: "#9C27B0",
-                  marginBottom: "15px",
-                  width: "100%",
-                }}
-              >
-                Get About Info
-              </button>
-              <div style={resultBoxStyle}>
-                {aboutResponse ? (
-                  <div>
-                    <h5
-                      style={{
-                        color: "#495057",
-                        marginTop: 0,
-                        marginBottom: "10px",
-                      }}
-                    >
-                      About IFrame Instance
-                    </h5>
-                    <div style={{ fontSize: "12px", color: "#6c757d" }}>
-                      <div>
-                        <strong style={{ color: "#212529" }}>
-                          Organization:
-                        </strong>{" "}
-                        {aboutResponse.organization_name}
-                      </div>
-                      <div>
-                        <strong style={{ color: "#212529" }}>Org ID:</strong>{" "}
-                        {aboutResponse.drive_id}
-                      </div>
-                      <div>
-                        <strong style={{ color: "#212529" }}>Profile:</strong>{" "}
-                        {aboutResponse.profile_name}
-                      </div>
-                      <div>
-                        <strong style={{ color: "#212529" }}>
-                          Profile ID:
-                        </strong>{" "}
-                        {aboutResponse.user_id}
-                      </div>
-                      {aboutResponse.host && (
-                        <div>
-                          <strong style={{ color: "#212529" }}>Host:</strong>{" "}
-                          {aboutResponse.host}
-                        </div>
-                      )}
-                      {aboutResponse.frontend_domain && (
-                        <div>
-                          <strong style={{ color: "#212529" }}>
-                            Frontend Domain:
-                          </strong>{" "}
-                          {aboutResponse.frontend_domain}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ color: "#6c757d", fontStyle: "italic" }}>
-                    Click "Get About Info" to see iframe instance details
-                  </div>
-                )}
+              {/* Navigation Controls */}
+              <div style={{ marginBottom: "30px" }}>
+                <h4>Navigation</h4>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                    gap: "10px",
+                  }}
+                >
+                  <button
+                    onClick={() =>
+                      navigateIframe(
+                        "org/current/drive/BROWSER_CACHE/DiskID_offline-local-browser-cache/FolderID_root-folder-offline-local-browser-cache/"
+                      )
+                    }
+                    style={{ ...buttonStyle, backgroundColor: "#2196F3" }}
+                  >
+                    Go to Files (Storage Drive)
+                  </button>
+                  <button
+                    onClick={() => navigateIframe("org/current/settings")}
+                    style={{ ...buttonStyle, backgroundColor: "#2196F3" }}
+                  >
+                    Go to Settings
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Auth Token Section */}
-            <div style={sectionStyle}>
-              <button
-                onClick={getAuthToken}
-                style={{
-                  ...buttonStyle,
-                  backgroundColor: "#FF9800",
-                  marginBottom: "15px",
-                  width: "100%",
-                }}
-              >
-                Get Auth Token
-              </button>
-              <div style={resultBoxStyle}>
-                {authTokenResponse ? (
-                  <div>
-                    <h5
-                      style={{
-                        color: "#495057",
-                        marginTop: 0,
-                        marginBottom: "10px",
-                      }}
-                    >
-                      Auth Token
-                    </h5>
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        marginBottom: "10px",
-                        color: "#6c757d",
-                      }}
-                    >
-                      <div>
-                        <strong style={{ color: "#212529" }}>Org ID:</strong>{" "}
-                        {authTokenResponse.drive_id}
-                      </div>
-                      <div>
-                        <strong style={{ color: "#212529" }}>
-                          Profile ID:
-                        </strong>{" "}
-                        {authTokenResponse.user_id}
-                      </div>
-                      {authTokenResponse.host && (
-                        <div>
-                          <strong style={{ color: "#212529" }}>
-                            Endpoint:
-                          </strong>{" "}
-                          {authTokenResponse.host}
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ marginBottom: "10px" }}>
-                      <strong style={{ color: "#212529" }}>Token:</strong>
-                      <div
-                        style={{
-                          ...codeStyle,
-                          maxHeight: "80px",
-                          overflow: "auto",
-                          wordBreak: "break-all",
-                          fontSize: "10px",
-                          marginTop: "5px",
-                        }}
-                      >
-                        {authTokenResponse.api_key_value}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(
-                          authTokenResponse.api_key_value
-                        );
-                        alert("Auth token copied to clipboard!");
-                      }}
-                      style={{
-                        ...buttonStyle,
-                        backgroundColor: "#FF9800",
-                        fontSize: "12px",
-                        padding: "6px 12px",
-                      }}
-                    >
-                      Copy Token
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ color: "#6c757d", fontStyle: "italic" }}>
-                    Click "Get Auth Token" to retrieve authentication token for
-                    API calls
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* REST Commands Section */}
-      <div style={{ marginBottom: "30px" }}>
-        <h4>REST Commands</h4>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
-            gap: "20px",
-            marginBottom: "30px",
-          }}
-        >
-          {/* Create File Commands */}
-          <div style={sectionStyle}>
-            <h5>Create File Commands</h5>
-
-            {/* Optional Parent Folder ID for Files */}
-            <div style={{ marginBottom: "15px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontWeight: "bold",
-                  fontSize: "12px",
-                }}
-              >
-                Parent Folder ID (Optional):
-              </label>
-              <input
-                type="text"
-                placeholder="Leave empty for root folder"
-                value={fileParentFolderId}
-                onChange={(e) => setFileParentFolderId(e.target.value)}
-                style={{ ...inputStyle, fontSize: "12px" }}
-              />
-              <div
-                style={{ fontSize: "10px", color: "#6c757d", marginTop: "3px" }}
-              >
-                If empty, files will be created in the root folder
-              </div>
-            </div>
-
-            {/* Create File with URL */}
-            <div style={{ marginBottom: "20px" }}>
-              <h6>Create File from URL</h6>
+              {/* Information Controls */}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr",
-                  gap: "10px",
-                  marginBottom: "15px",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+                  gap: "20px",
+                  marginBottom: "30px",
                 }}
               >
-                <input
-                  type="url"
-                  placeholder="Raw URL"
-                  value={rawUrl}
-                  onChange={(e) => setRawUrl(e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
-              <button
-                onClick={createFileCommand}
-                style={{
-                  ...buttonStyle,
-                  backgroundColor: "#4CAF50",
-                  width: "100%",
-                }}
-              >
-                Create File from URL
-              </button>
-            </div>
+                {/* About Info Section */}
+                <div style={sectionStyle}>
+                  <button
+                    onClick={getAboutChildIFrameInstance}
+                    style={{
+                      ...buttonStyle,
+                      backgroundColor: "#9C27B0",
+                      marginBottom: "15px",
+                      width: "100%",
+                    }}
+                  >
+                    Get About Info
+                  </button>
+                  <div style={resultBoxStyle}>
+                    {aboutResponse ? (
+                      <div>
+                        <h5
+                          style={{
+                            color: "#495057",
+                            marginTop: 0,
+                            marginBottom: "10px",
+                          }}
+                        >
+                          About IFrame Instance
+                        </h5>
+                        <div style={{ fontSize: "12px", color: "#6c757d" }}>
+                          <div>
+                            <strong style={{ color: "#212529" }}>
+                              Organization:
+                            </strong>{" "}
+                            {aboutResponse.organization_name}
+                          </div>
+                          <div>
+                            <strong style={{ color: "#212529" }}>
+                              Org ID:
+                            </strong>{" "}
+                            {aboutResponse.drive_id}
+                          </div>
+                          <div>
+                            <strong style={{ color: "#212529" }}>
+                              Profile:
+                            </strong>{" "}
+                            {aboutResponse.profile_name}
+                          </div>
+                          <div>
+                            <strong style={{ color: "#212529" }}>
+                              Profile ID:
+                            </strong>{" "}
+                            {aboutResponse.user_id}
+                          </div>
+                          {aboutResponse.host && (
+                            <div>
+                              <strong style={{ color: "#212529" }}>
+                                Host:
+                              </strong>{" "}
+                              {aboutResponse.host}
+                            </div>
+                          )}
+                          {aboutResponse.frontend_domain && (
+                            <div>
+                              <strong style={{ color: "#212529" }}>
+                                Frontend Domain:
+                              </strong>{" "}
+                              {aboutResponse.frontend_domain}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ color: "#6c757d", fontStyle: "italic" }}>
+                        Click "Get About Info" to see iframe instance details
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-            {/* Create File with Data */}
-            <div>
-              <h6>Create File from Local Data</h6>
-              <div style={{ marginBottom: "15px" }}>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={handleFileSelect}
-                  style={{ marginBottom: "10px" }}
-                  accept="*/*"
-                />
-                <div
+                {/* Auth Token Section */}
+                <div style={sectionStyle}>
+                  <button
+                    onClick={getAuthToken}
+                    style={{
+                      ...buttonStyle,
+                      backgroundColor: "#FF9800",
+                      marginBottom: "15px",
+                      width: "100%",
+                    }}
+                  >
+                    Get Auth Token
+                  </button>
+                  <div style={resultBoxStyle}>
+                    {authTokenResponse ? (
+                      <div>
+                        <h5
+                          style={{
+                            color: "#495057",
+                            marginTop: 0,
+                            marginBottom: "10px",
+                          }}
+                        >
+                          Auth Token
+                        </h5>
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            marginBottom: "10px",
+                            color: "#6c757d",
+                          }}
+                        >
+                          <div>
+                            <strong style={{ color: "#212529" }}>
+                              Org ID:
+                            </strong>{" "}
+                            {authTokenResponse.drive_id}
+                          </div>
+                          <div>
+                            <strong style={{ color: "#212529" }}>
+                              Profile ID:
+                            </strong>{" "}
+                            {authTokenResponse.user_id}
+                          </div>
+                          {authTokenResponse.host && (
+                            <div>
+                              <strong style={{ color: "#212529" }}>
+                                Endpoint:
+                              </strong>{" "}
+                              {authTokenResponse.host}
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ marginBottom: "10px" }}>
+                          <strong style={{ color: "#212529" }}>Token:</strong>
+                          <div
+                            style={{
+                              ...codeStyle,
+                              maxHeight: "80px",
+                              overflow: "auto",
+                              wordBreak: "break-all",
+                              fontSize: "10px",
+                              marginTop: "5px",
+                            }}
+                          >
+                            {authTokenResponse.api_key_value}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              authTokenResponse.api_key_value
+                            );
+                            alert("Auth token copied to clipboard!");
+                          }}
+                          style={{
+                            ...buttonStyle,
+                            backgroundColor: "#FF9800",
+                            fontSize: "12px",
+                            padding: "6px 12px",
+                          }}
+                        >
+                          Copy Token
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ color: "#6c757d", fontStyle: "italic" }}>
+                        Click "Get Auth Token" to retrieve authentication token
+                        for API calls
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* REST Commands Section */}
+          <div style={{ marginBottom: "30px" }}>
+            <h4>REST Commands</h4>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+                gap: "20px",
+                marginBottom: "30px",
+              }}
+            >
+              {/* Create File Commands */}
+              <div style={sectionStyle}>
+                <h5>Create File Commands</h5>
+
+                {/* Optional Parent Folder ID for Files */}
+                <div style={{ marginBottom: "15px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "5px",
+                      fontWeight: "bold",
+                      fontSize: "12px",
+                    }}
+                  >
+                    Parent Folder ID (Optional):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Leave empty for root folder"
+                    value={fileParentFolderId}
+                    onChange={(e) => setFileParentFolderId(e.target.value)}
+                    style={{ ...inputStyle, fontSize: "12px" }}
+                  />
+                  <div
+                    style={{
+                      fontSize: "10px",
+                      color: "#6c757d",
+                      marginTop: "3px",
+                    }}
+                  >
+                    If empty, files will be created in the root folder
+                  </div>
+                </div>
+
+                {/* Create File with URL */}
+                <div style={{ marginBottom: "20px" }}>
+                  <h6>Create File from URL</h6>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr",
+                      gap: "10px",
+                      marginBottom: "15px",
+                    }}
+                  >
+                    <input
+                      type="url"
+                      placeholder="Raw URL"
+                      value={rawUrl}
+                      onChange={(e) => setRawUrl(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <button
+                    onClick={createFileCommand}
+                    style={{
+                      ...buttonStyle,
+                      backgroundColor: "#4CAF50",
+                      width: "100%",
+                    }}
+                  >
+                    Create File from URL
+                  </button>
+                </div>
+
+                {/* Create File with Data */}
+                <div>
+                  <h6>Create File from Local Data</h6>
+                  <div style={{ marginBottom: "15px" }}>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      onChange={handleFileSelect}
+                      style={{ marginBottom: "10px" }}
+                      accept="*/*"
+                    />
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        color: "#6c757d",
+                        marginBottom: "5px",
+                      }}
+                    >
+                      Maximum file size: 50MB
+                    </div>
+                    {selectedFile && (
+                      <div style={{ fontSize: "12px", color: "#6c757d" }}>
+                        Selected: {selectedFile.name} (
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)}MB)
+                        <div style={{ color: "#28a745", fontSize: "10px" }}>
+                          ✅ Within 50MB limit
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={createFileWithData}
+                    disabled={!selectedFile}
+                    style={{
+                      ...buttonStyle,
+                      backgroundColor: selectedFile ? "#FF9800" : "#ccc",
+                      width: "100%",
+                      cursor: selectedFile ? "pointer" : "not-allowed",
+                    }}
+                  >
+                    Create File from Data
+                  </button>
+                </div>
+
+                {/* File Creation Result */}
+                {lastFileResult && (
+                  <div
+                    style={{
+                      marginTop: "15px",
+                      padding: "10px",
+                      borderRadius: "6px",
+                      backgroundColor: lastFileResult.error ? "#fee" : "#efe",
+                      border: `1px solid ${
+                        lastFileResult.error ? "#fcc" : "#cfc"
+                      }`,
+                      fontSize: "12px",
+                    }}
+                  >
+                    {lastFileResult.error ? (
+                      <div style={{ color: "#d32f2f" }}>
+                        <strong>❌ Error:</strong> {lastFileResult.error}
+                      </div>
+                    ) : (
+                      <div style={{ color: "#2e7d32" }}>
+                        <div>
+                          <strong>✅ File Created Successfully!</strong>
+                        </div>
+                        <div>
+                          <strong>Name:</strong> {lastFileResult.name}
+                        </div>
+                        <div>
+                          <strong>File ID:</strong> {lastFileResult.fileID}
+                        </div>
+                        <div>
+                          <strong>Parent Folder:</strong>{" "}
+                          {lastFileResult.parentFolderID}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Create Folder Commands */}
+              <div style={sectionStyle}>
+                <h5>Create Folder Commands</h5>
+
+                {/* Optional Parent Folder ID for Folders */}
+                <div style={{ marginBottom: "15px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "5px",
+                      fontWeight: "bold",
+                      fontSize: "12px",
+                    }}
+                  >
+                    Parent Folder ID (Optional):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Leave empty for root folder"
+                    value={folderParentFolderId}
+                    onChange={(e) => setFolderParentFolderId(e.target.value)}
+                    style={{ ...inputStyle, fontSize: "12px" }}
+                  />
+                  <div
+                    style={{
+                      fontSize: "10px",
+                      color: "#6c757d",
+                      marginTop: "3px",
+                    }}
+                  >
+                    If empty, folder will be created in the root folder
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: "15px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "5px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Folder Name:
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter folder name"
+                    value={folderName}
+                    onChange={(e) => setFolderName(e.target.value)}
+                    style={inputStyle}
+                  />
+                </div>
+
+                <button
+                  onClick={createFolderCommand}
+                  disabled={!folderName.trim()}
                   style={{
-                    fontSize: "11px",
-                    color: "#6c757d",
-                    marginBottom: "5px",
+                    ...buttonStyle,
+                    backgroundColor: folderName.trim() ? "#9C27B0" : "#ccc",
+                    width: "100%",
+                    cursor: folderName.trim() ? "pointer" : "not-allowed",
                   }}
                 >
-                  Maximum file size: 50MB
-                </div>
-                {selectedFile && (
-                  <div style={{ fontSize: "12px", color: "#6c757d" }}>
-                    Selected: {selectedFile.name} (
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)}MB)
-                    <div style={{ color: "#28a745", fontSize: "10px" }}>
-                      ✅ Within 50MB limit
-                    </div>
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={createFileWithData}
-                disabled={!selectedFile}
-                style={{
-                  ...buttonStyle,
-                  backgroundColor: selectedFile ? "#FF9800" : "#ccc",
-                  width: "100%",
-                  cursor: selectedFile ? "pointer" : "not-allowed",
-                }}
-              >
-                Create File from Data
-              </button>
-            </div>
+                  Create Folder
+                </button>
 
-            {/* File Creation Result */}
-            {lastFileResult && (
-              <div
-                style={{
-                  marginTop: "15px",
-                  padding: "10px",
-                  borderRadius: "6px",
-                  backgroundColor: lastFileResult.error ? "#fee" : "#efe",
-                  border: `1px solid ${lastFileResult.error ? "#fcc" : "#cfc"}`,
-                  fontSize: "12px",
-                }}
-              >
-                {lastFileResult.error ? (
-                  <div style={{ color: "#d32f2f" }}>
-                    <strong>❌ Error:</strong> {lastFileResult.error}
-                  </div>
-                ) : (
-                  <div style={{ color: "#2e7d32" }}>
-                    <div>
-                      <strong>✅ File Created Successfully!</strong>
-                    </div>
-                    <div>
-                      <strong>Name:</strong> {lastFileResult.name}
-                    </div>
-                    <div>
-                      <strong>File ID:</strong> {lastFileResult.fileID}
-                    </div>
-                    <div>
-                      <strong>Parent Folder:</strong>{" "}
-                      {lastFileResult.parentFolderID}
-                    </div>
+                {/* Folder Creation Result */}
+                {lastFolderResult && (
+                  <div
+                    style={{
+                      marginTop: "15px",
+                      padding: "10px",
+                      borderRadius: "6px",
+                      backgroundColor: lastFolderResult.error ? "#fee" : "#efe",
+                      border: `1px solid ${
+                        lastFolderResult.error ? "#fcc" : "#cfc"
+                      }`,
+                      fontSize: "12px",
+                    }}
+                  >
+                    {lastFolderResult.error ? (
+                      <div style={{ color: "#d32f2f" }}>
+                        <strong>❌ Error:</strong> {lastFolderResult.error}
+                      </div>
+                    ) : (
+                      <div style={{ color: "#2e7d32" }}>
+                        <div>
+                          <strong>✅ Folder Created Successfully!</strong>
+                        </div>
+                        <div>
+                          <strong>Name:</strong> {lastFolderResult.name}
+                        </div>
+                        <div>
+                          <strong>Folder ID:</strong>{" "}
+                          {lastFolderResult.folderID}
+                        </div>
+                        <div>
+                          <strong>Parent Folder:</strong>{" "}
+                          {lastFolderResult.parentFolderID}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Create Folder Commands */}
-          <div style={sectionStyle}>
-            <h5>Create Folder Commands</h5>
-
-            {/* Optional Parent Folder ID for Folders */}
-            <div style={{ marginBottom: "15px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontWeight: "bold",
-                  fontSize: "12px",
-                }}
-              >
-                Parent Folder ID (Optional):
-              </label>
-              <input
-                type="text"
-                placeholder="Leave empty for root folder"
-                value={folderParentFolderId}
-                onChange={(e) => setFolderParentFolderId(e.target.value)}
-                style={{ ...inputStyle, fontSize: "12px" }}
-              />
-              <div
-                style={{ fontSize: "10px", color: "#6c757d", marginTop: "3px" }}
-              >
-                If empty, folder will be created in the root folder
-              </div>
-            </div>
-
-            <div style={{ marginBottom: "15px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontWeight: "bold",
-                }}
-              >
-                Folder Name:
-              </label>
-              <input
-                type="text"
-                placeholder="Enter folder name"
-                value={folderName}
-                onChange={(e) => setFolderName(e.target.value)}
-                style={inputStyle}
-              />
-            </div>
-
-            <button
-              onClick={createFolderCommand}
-              disabled={!folderName.trim()}
-              style={{
-                ...buttonStyle,
-                backgroundColor: folderName.trim() ? "#9C27B0" : "#ccc",
-                width: "100%",
-                cursor: folderName.trim() ? "pointer" : "not-allowed",
-              }}
-            >
-              Create Folder
-            </button>
-
-            {/* Folder Creation Result */}
-            {lastFolderResult && (
-              <div
-                style={{
-                  marginTop: "15px",
-                  padding: "10px",
-                  borderRadius: "6px",
-                  backgroundColor: lastFolderResult.error ? "#fee" : "#efe",
-                  border: `1px solid ${
-                    lastFolderResult.error ? "#fcc" : "#cfc"
-                  }`,
-                  fontSize: "12px",
-                }}
-              >
-                {lastFolderResult.error ? (
-                  <div style={{ color: "#d32f2f" }}>
-                    <strong>❌ Error:</strong> {lastFolderResult.error}
-                  </div>
-                ) : (
-                  <div style={{ color: "#2e7d32" }}>
-                    <div>
-                      <strong>✅ Folder Created Successfully!</strong>
-                    </div>
-                    <div>
-                      <strong>Name:</strong> {lastFolderResult.name}
-                    </div>
-                    <div>
-                      <strong>Folder ID:</strong> {lastFolderResult.folderID}
-                    </div>
-                    <div>
-                      <strong>Parent Folder:</strong>{" "}
-                      {lastFolderResult.parentFolderID}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Additional Information */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "20px",
-        }}
-      >
-        {/* Debug Info */}
-        <div style={cardStyle}>
-          <h4 style={{ color: "#495057", marginTop: 0 }}>Debug Info</h4>
+          {/* Additional Information */}
           <div
             style={{
-              fontSize: "12px",
-              fontFamily: "monospace",
-              color: "#6c757d",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              gap: "20px",
             }}
           >
-            <div>
-              <strong style={{ color: "#212529" }}>Origin:</strong>{" "}
-              {iframeOrigin}
-            </div>
-            <div>
-              <strong style={{ color: "#212529" }}>Dev Mode:</strong>{" "}
-              {LOCAL_DEV_MODE ? "Yes" : "No"}
-            </div>
-            <div>
-              <strong style={{ color: "#212529" }}>Init Mode:</strong>{" "}
-              {currentInitMode || "None"}
-            </div>
-            {currentInitMode === "ephemeral" && (
-              <>
-                <div>
-                  <strong style={{ color: "#212529" }}>Org Secret:</strong>{" "}
-                  {org_client_secret.current}
-                </div>
-                <div>
-                  <strong style={{ color: "#212529" }}>Profile Secret:</strong>{" "}
-                  {profile_client_secret.current}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Init Response */}
-        <div style={cardStyle}>
-          <h4 style={{ color: "#495057", marginTop: 0 }}>Init Response</h4>
-          {initResponse ? (
-            <pre
-              style={{
-                ...codeStyle,
-                border: initResponse.success
-                  ? "2px solid #4CAF50"
-                  : "2px solid #f44336",
-              }}
-            >
-              {JSON.stringify(initResponse, null, 2)}
-            </pre>
-          ) : (
-            <div style={{ color: "#6c757d", fontStyle: "italic" }}>
-              Initialization response will appear here
-            </div>
-          )}
-        </div>
-
-        {/* Last Command Result */}
-        <div style={cardStyle}>
-          <h4 style={{ color: "#495057", marginTop: 0 }}>
-            Last Command Result
-          </h4>
-          {lastCommandResult ? (
-            <div>
-              {lastCommandResult.success ? (
-                <div style={{ color: "#28a745", marginBottom: "10px" }}>
-                  ✅ <strong>Success!</strong>
-                </div>
-              ) : (
-                <div style={{ color: "#dc3545", marginBottom: "10px" }}>
-                  ❌ <strong>Failed</strong>
-                </div>
-              )}
-              <pre
+            {/* Debug Info */}
+            <div style={cardStyle}>
+              <h4 style={{ color: "#495057", marginTop: 0 }}>Debug Info</h4>
+              <div
                 style={{
-                  ...codeStyle,
-                  border: lastCommandResult.success
-                    ? "2px solid #4CAF50"
-                    : "2px solid #f44336",
-                  maxHeight: "200px",
-                  overflow: "auto",
+                  fontSize: "12px",
+                  fontFamily: "monospace",
+                  color: "#6c757d",
                 }}
               >
-                {JSON.stringify(lastCommandResult, null, 2)}
-              </pre>
+                <div>
+                  <strong style={{ color: "#212529" }}>Origin:</strong>{" "}
+                  {iframeOrigin}
+                </div>
+                <div>
+                  <strong style={{ color: "#212529" }}>Dev Mode:</strong>{" "}
+                  {LOCAL_DEV_MODE ? "Yes" : "No"}
+                </div>
+                <div>
+                  <strong style={{ color: "#212529" }}>Init Mode:</strong>{" "}
+                  {currentInitMode || "None"}
+                </div>
+                {currentInitMode === "ephemeral" && (
+                  <>
+                    <div>
+                      <strong style={{ color: "#212529" }}>Org Secret:</strong>{" "}
+                      {org_client_secret.current}
+                    </div>
+                    <div>
+                      <strong style={{ color: "#212529" }}>
+                        Profile Secret:
+                      </strong>{" "}
+                      {profile_client_secret.current}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-          ) : (
-            <div style={{ color: "#6c757d", fontStyle: "italic" }}>
-              REST command results will appear here. Success/error alerts will
-              also appear for completed commands.
-            </div>
-          )}
-        </div>
-      </div>
 
-      <div style={{ marginTop: "64px", width: "100%" }}>
+            {/* Init Response */}
+            <div style={cardStyle}>
+              <h4 style={{ color: "#495057", marginTop: 0 }}>Init Response</h4>
+              {initResponse ? (
+                <pre
+                  style={{
+                    ...codeStyle,
+                    border: initResponse.success
+                      ? "2px solid #4CAF50"
+                      : "2px solid #f44336",
+                  }}
+                >
+                  {JSON.stringify(initResponse, null, 2)}
+                </pre>
+              ) : (
+                <div style={{ color: "#6c757d", fontStyle: "italic" }}>
+                  Initialization response will appear here
+                </div>
+              )}
+            </div>
+
+            {/* Last Command Result */}
+            <div style={cardStyle}>
+              <h4 style={{ color: "#495057", marginTop: 0 }}>
+                Last Command Result
+              </h4>
+              {lastCommandResult ? (
+                <div>
+                  {lastCommandResult.success ? (
+                    <div style={{ color: "#28a745", marginBottom: "10px" }}>
+                      ✅ <strong>Success!</strong>
+                    </div>
+                  ) : (
+                    <div style={{ color: "#dc3545", marginBottom: "10px" }}>
+                      ❌ <strong>Failed</strong>
+                    </div>
+                  )}
+                  <pre
+                    style={{
+                      ...codeStyle,
+                      border: lastCommandResult.success
+                        ? "2px solid #4CAF50"
+                        : "2px solid #f44336",
+                      maxHeight: "200px",
+                      overflow: "auto",
+                    }}
+                  >
+                    {JSON.stringify(lastCommandResult, null, 2)}
+                  </pre>
+                </div>
+              ) : (
+                <div style={{ color: "#6c757d", fontStyle: "italic" }}>
+                  REST command results will appear here. Success/error alerts
+                  will also appear for completed commands.
+                </div>
+              )}
+            </div>
+          </div>
+        </details>
+      </div>
+      <br />
+      <br />
+      <br />
+      <div style={{ marginTop: "64px", width: "100%", marginBottom: "100px" }}>
         <h2>Examples Appendix</h2>
+        <p>Popular Use Cases and examples with code snippets</p>
+        <br />
         <table className="examples-table">
           <thead>
             <tr>
@@ -1543,6 +1572,51 @@ function App() {
             ))}
           </tbody>
         </table>
+      </div>
+      <br />
+      <br />
+      <br />
+      <div style={{ marginTop: "64px", width: "100%", marginBottom: "100px" }}>
+        <h2>Frequently Used Scripts</h2>
+        <p>
+          Copy paste these frequently used REST API scripts into your code for
+          easy integration
+        </p>
+        <br />
+        <iframe
+          src="https://codesandbox.io/embed/554k66?view=editor+%2B+preview&module=%2Fsrc%2Fpages%2Fcreate-org-bulk-populate%2Fcode-snippet.js"
+          style={{
+            width: "100%",
+            height: "700px",
+            border: "0",
+            borderRadius: "4px",
+            overflow: "hidden",
+          }}
+          title="bulk-scripting-officex"
+          allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+          sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+        ></iframe>
+      </div>
+      <br />
+      <br />
+      <br />
+      <div style={{ marginTop: "64px", width: "100%", marginBottom: "100px" }}>
+        <h2>Bulk CSV Actions</h2>
+        <p>Interactive UI for bulk CSV actions</p>
+        <br />
+        <iframe
+          src="https://codesandbox.io/embed/554k66?view=preview&module=%2Fsrc%2Fpages%2Fcreate-org-bulk-populate%2Fcode-snippet.js"
+          style={{
+            width: "100%",
+            height: "700px",
+            border: "0",
+            borderRadius: "4px",
+            overflow: "hidden",
+          }}
+          title="bulk-scripting-officex"
+          allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+          sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+        ></iframe>
       </div>
     </div>
   );
@@ -1608,53 +1682,62 @@ const EXAMPLES = [
     title: "Anonymous iframe",
     description:
       "Give your users a file management UI without code. Pure clientside, with offline capabilities and free cloud. Easy to integrate in 2 mins. Ideal for quick prototypes or adding basic file features to any website without a backend.",
-    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+    github:
+      "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
   {
     title: "Single Use Tools",
     description: `Eg. YouTube downloaders, PDF generators, file converters...etc. Give your users a clean, robust clientside UI for file management & offline storage. Perfect for tools that need to process files securely and locally without a user account.`,
-    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+    github:
+      "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
   {
     title: "Community Platforms",
     description:
       "Eg. Competitors to Discord, Reddit, Farcaster, etc. Give your communities a full digital storage experience without leaving your platform. Community files and folders, permissions to users & groups, clean modern UI. Full developer REST API available, 100% open source self-hostable, whitelabel.",
-    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+    github:
+      "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
   {
     title: "Workplace Tools",
     description:
       "Eg. Competitors to Adobe, Upwork, Zapier, Protonmail, CRMs, etc. Give your professionals a full digital storage experience without leaving your platform. Integrate file management, version control, and collaboration tools directly into your professional-grade software. Full developer REST API available, 100% open source self-hostable, whitelabel.",
-    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+    github:
+      "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
   {
     title: "Online Education",
     description:
       "Eg. Running your own online course, bootcamp, cohort based learning platform, etc. Provide a private, secure space for students and instructors to share course materials, submit assignments, and collaborate on projects.",
-    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+    github:
+      "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
   {
     title: "Chrome Extensions",
     description:
       "Eg. Competitors to Loom screen recorder, tweet generators, etc. Use OfficeX as a local or cloud storage backend for your extension, enabling users to manage recordings, generated content, or other files directly from their browser.",
-    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+    github:
+      "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
   {
     title: "AI Agents",
     description:
       "Eg. ChatGPT, DeepSeek, Claude, etc. Enable AI agents to interact with user-managed files, allowing them to summarize documents, generate content based on local data, or perform actions on files stored in a user's private space.",
-    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+    github:
+      "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
   {
     title: "Self-Hosting for Enterprise",
     description:
       "Eg. Schools, Agencies, Governments, etc. Provide a 100% open-source, customizable, and self-hostable file solution to maintain full control over sensitive data, meet compliance requirements, and reduce reliance on third-party cloud providers.",
-    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+    github:
+      "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
   {
     title: "Self-Hosting for Personal",
     description:
       "Eg. Home, Family, Privacy, etc. Offer a private and secure self-hosted solution for families and individuals to manage their files, photos, and personal data without worrying about corporate data harvesting or privacy concerns.",
-    github: "https://github.com/OfficeXApp/iframe-demo/tree/main/src",
+    github:
+      "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
 ];
