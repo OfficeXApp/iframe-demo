@@ -2,6 +2,11 @@
 
 ## Easy Identity
 
+View code snippet: https://codesandbox.io/p/sandbox/sn95h3
+
+<img width="912" height="814" alt="image" src="https://github.com/user-attachments/assets/ba1905b2-ffc0-4164-995e-8e59e134aa0c" />
+
+
 Deterministically create users in OfficeX that match your existing user identity system.
 
 ```
@@ -30,7 +35,13 @@ It uses your "secret_entropy" string to deterministically generate a crypto iden
 
 Note that you do not need to trust OfficeX to generate your users' crypto identities. You can generate them yourself by copying the [open source code here](https://github.com/OfficeXApp/typescript-server/blob/main/src/services/auth.ts) or reference on [codesandbox](https://codesandbox.io/p/sandbox/sn95h3), or simply self hosting your own OfficeX server instance.
 
+
 ## Bulk Scripting Actions
+
+View code snippets: https://codesandbox.io/p/sandbox/bulk-scripting-officex-554k66
+
+<img width="858" height="755" alt="image" src="https://github.com/user-attachments/assets/3ccedda9-5fa0-4841-8ffd-519c68207ffd" />
+
 
 Common workflows you will encounter include:
 
