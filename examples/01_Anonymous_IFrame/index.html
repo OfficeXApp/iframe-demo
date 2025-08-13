@@ -71,10 +71,10 @@
 
     iframeElement.onload = () => {
       const ephemeralConfig = {
-        org_client_secret: `org-123abc-${Date.now()}`,
-        profile_client_secret: `profile-123xyz-${Date.now()}`,
-        org_name: "Anonymous Demo Org",
-        profile_name: "Anonymous Demo Profile",
+        optional_org_entropy: "____",
+        optional_profile_entropy: "____",
+        org_name: "Offline Org",
+        profile_name: "Anon",
       };
 
       const initData = { ephemeral: ephemeralConfig };
@@ -114,10 +114,10 @@
 
         iframeElementDisplay.onload = () => {
           const ephemeralConfig = {
-            org_client_secret: `org-123abc-${Date.now()}`,
-            profile_client_secret: `profile-123xyz-${Date.now()}`,
-            org_name: "Anonymous Demo Org",
-            profile_name: "Anonymous Demo Profile",
+            optional_org_entropy: "",
+            optional_profile_entropy: "",
+            org_name: "Offline Org",
+            profile_name: "Anon",
           };
 
           const initData = { ephemeral: ephemeralConfig };
