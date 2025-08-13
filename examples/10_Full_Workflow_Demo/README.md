@@ -1,6 +1,6 @@
 # Full Workflow Demo
 
-Sample scripts that demonstrate the full workflow of creating an organization, populating it with users, and redeeming a factory gift card.
+Sample scripts that demonstrate the full workflow of creating an organization, populating it with deterministic users, and viewing it on web browser via auto-login url.
 
 Try it on codesandbox:
 https://codesandbox.io/p/sandbox/554k66

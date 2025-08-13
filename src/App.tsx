@@ -16,6 +16,8 @@ interface AboutChildIFrameInstanceResponse {
   profile_name: string;
   host?: string;
   frontend_domain?: string;
+  frontend_url?: string;
+  current_url?: string;
 }
 
 // Auth Token response type
@@ -63,8 +65,8 @@ interface CreateFolderCommand {
 
 // Init config types
 interface EphemeralConfig {
-  org_client_secret: string;
-  profile_client_secret: string;
+  optional_org_entropy: string;
+  optional_profile_entropy: string;
   org_name: string;
   profile_name: string;
 }
@@ -80,7 +82,7 @@ interface InjectedConfig {
 }
 
 // Set a global-like variable for development mode
-const LOCAL_DEV_MODE = false;
+const LOCAL_DEV_MODE = true;
 const iframeOrigin = LOCAL_DEV_MODE
   ? "http://localhost:5173"
   : "https://officex.app";
@@ -102,6 +104,9 @@ function App() {
   >(null);
   const [grantExistingTracer, setGrantExistingTracer] = useState<string>("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [navigationRoute, setNavigationRoute] = useState<string>(
+    "/org/current/welcome"
+  );
 
   // File creation state
   const [fileSize] = useState(1024);
@@ -123,13 +128,13 @@ function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Generate unique seeds for this session - persist these across refreshes
-  const org_client_secret = useRef(`org-123abc`);
-  const profile_client_secret = useRef(`profile-123xyz`);
+  const optional_org_entropy = useRef(`org-123abc`);
+  const optional_profile_entropy = useRef(`profile-123xyz`);
 
   // Default configurations
   const defaultEphemeralConfig: EphemeralConfig = {
-    org_client_secret: org_client_secret.current,
-    profile_client_secret: profile_client_secret.current,
+    optional_org_entropy: optional_org_entropy.current,
+    optional_profile_entropy: optional_profile_entropy.current,
     org_name: "Demo Org",
     profile_name: "Demo Profile",
   };
@@ -434,7 +439,8 @@ function App() {
 
     if (!hasGrantParams) {
       // Normal load - show init modal
-      setIframeReady(false);
+      console.log("Normal load - show init modal");
+
       setInitResponse(null);
       setAboutResponse(null);
       setAuthTokenResponse(null);
@@ -589,10 +595,10 @@ function App() {
 
     iframeElement.onload = () => {
       const ephemeralConfig = {
-        org_client_secret: \`org-123abc-\${Date.now()}\`,
-        profile_client_secret: \`profile-123xyz-\${Date.now()}\`,
-        org_name: "Ephemeral Demo Org",
-        profile_name: "Ephemeral Demo Profile",
+        optional_org_entropy: "____",
+        optional_profile_entropy: "____",
+        org_name: "Offline Org",
+        profile_name: "Anon",
       };
 
       const initData = { ephemeral: ephemeralConfig };
@@ -873,7 +879,14 @@ function App() {
             <div style={{ marginBottom: "20px" }}>
               <p style={{ color: "#666", marginBottom: "15px" }}>
                 Edit the JSON configuration below to inject your own
-                organization and profile settings:
+                organization and profile settings. Get your AUTH JSON from your
+                officex.app settings page{" "}
+                <a
+                  href="https://officex.app/org/current/settings"
+                  target="_blank"
+                >
+                  "copy iframe code" button here.
+                </a>
               </p>
             </div>
 
@@ -956,6 +969,20 @@ function App() {
               {/* Navigation Controls */}
               <div style={{ marginBottom: "30px" }}>
                 <h4>Navigation</h4>
+                <div style={{ margin: 16 }}>
+                  <input
+                    type="text"
+                    placeholder="Enter route"
+                    value={navigationRoute}
+                    onChange={(e) => setNavigationRoute(e.target.value)}
+                  />
+                  <button
+                    onClick={() => navigateIframe(navigationRoute)}
+                    style={{ padding: "8px", fontSize: "0.9rem" }}
+                  >
+                    Navigate
+                  </button>
+                </div>
                 <div
                   style={{
                     display: "grid",
@@ -966,7 +993,7 @@ function App() {
                   <button
                     onClick={() =>
                       navigateIframe(
-                        "org/current/drive/BROWSER_CACHE/DiskID_offline-local-browser-cache/FolderID_root-folder-offline-local-browser-cache/"
+                        "/org/current/drive/BROWSER_CACHE/DiskID_offline-local-browser-cache/FolderID_root-folder-offline-local-browser-cache/"
                       )
                     }
                     style={{ ...buttonStyle, backgroundColor: "#2196F3" }}
@@ -974,7 +1001,7 @@ function App() {
                     Go to Files (Storage Drive)
                   </button>
                   <button
-                    onClick={() => navigateIframe("org/current/settings")}
+                    onClick={() => navigateIframe("/org/current/settings")}
                     style={{ ...buttonStyle, backgroundColor: "#2196F3" }}
                   >
                     Go to Settings
@@ -1055,6 +1082,22 @@ function App() {
                                 Frontend Domain:
                               </strong>{" "}
                               {aboutResponse.frontend_domain}
+                            </div>
+                          )}
+                          {aboutResponse.frontend_domain && (
+                            <div>
+                              <strong style={{ color: "#212529" }}>
+                                Frontend Url:
+                              </strong>{" "}
+                              {aboutResponse.frontend_url}
+                            </div>
+                          )}
+                          {aboutResponse.frontend_domain && (
+                            <div>
+                              <strong style={{ color: "#212529" }}>
+                                Current URL:
+                              </strong>{" "}
+                              {aboutResponse.current_url}
                             </div>
                           )}
                         </div>
@@ -1466,13 +1509,13 @@ function App() {
                   <>
                     <div>
                       <strong style={{ color: "#212529" }}>Org Secret:</strong>{" "}
-                      {org_client_secret.current}
+                      {optional_org_entropy.current}
                     </div>
                     <div>
                       <strong style={{ color: "#212529" }}>
                         Profile Secret:
                       </strong>{" "}
-                      {profile_client_secret.current}
+                      {optional_profile_entropy.current}
                     </div>
                   </>
                 )}

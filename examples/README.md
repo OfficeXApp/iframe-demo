@@ -1,16 +1,50 @@
-### Examples Appendix
+# Examples Appendix
 
-Try the bulk action scripts on codesandbox:
-https://codesandbox.io/p/sandbox/554k66
+## Easy Identity
 
-| Use Case                                                             | Description                                                                                                                                                                                                                                                                                                                                                  | GitHub Example                                                                                                 |
-| :------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
-| [Anonymous iframe](./examples/01_Anonymous_Iframe)                   | Give your users a file management UI without code. Pure clientside, with offline capabilities and free cloud. Easy to integrate in 2 mins. Ideal for quick prototypes or adding basic file features to any website without a backend.                                                                                                                        | [Github Example](https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md) |
-| [Single Use Tools](./examples/02_SingleUse_Tools)                    | Eg. YouTube downloaders, PDF generators, file converters...etc. Give your users a clean, robust clientside UI for file management & offline storage. Perfect for tools that need to process files securely and locally without a user account.                                                                                                               | [Github Example](https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md) |
-| [Community Platforms](./examples/03_Community_Platforms)             | Eg. Competitors to Discord, Reddit, Farcaster, etc. Give your communities a full digital storage experience without leaving your platform. Community files and folders, permissions to users & groups, clean modern UI. Full developer REST API available, 100% open source self-hostable, whitelabel.                                                       | [Github Example](https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md) |
-| [Workplace Tools](./examples/04_Workplace_Tools)                     | Eg. Competitors to Adobe, Upwork, Zapier, Protonmail, CRMs, etc. Give your professionals a full digital storage experience without leaving your platform. Integrate file management, version control, and collaboration tools directly into your professional-grade software. Full developer REST API available, 100% open source self-hostable, whitelabel. | [Github Example](https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md) |
-| [Online Education](./examples/05_Online_Education)                   | Eg. Running your own online course, bootcamp, cohort based learning platform, etc. Provide a private, secure space for students and instructors to share course materials, submit assignments, and collaborate on projects.                                                                                                                                  | [Github Example](https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md) |
-| [Chrome Extensions](./examples/06_Chrome_Extensions)                 | Eg. Competitors to Loom screen recorder, tweet generators, etc. Use OfficeX as a local or cloud storage backend for your extension, enabling users to manage recordings, generated content, or other files directly from their browser.                                                                                                                      | [Github Example](https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md) |
-| [AI Agents](./examples/07_AI_Agents)                                 | Eg. ChatGPT, DeepSeek, Claude, etc. Enable AI agents to interact with user-managed files, allowing them to summarize documents, generate content based on local data, or perform actions on files stored in a user's private space.                                                                                                                          | [Github Example](https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md) |
-| [Self-Hosting for Enterprise](./examples/08_Self_Hosting_Enterprise) | Eg. Schools, Agencies, Governments, etc. Provide a 100% open-source, customizable, and self-hostable file solution to maintain full control over sensitive data, meet compliance requirements, and reduce reliance on third-party cloud providers.                                                                                                           | [Github Example](https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md) |
-| [Self-Hosting for Personal](./examples/09_Self_Hosting_Personal)     | Eg. Home, Family, Privacy, etc. Offer a private and secure self-hosted solution for families and individuals to manage their files, photos, and personal data without worrying about corporate data harvesting or privacy concerns.                                                                                                                          | [Github Example](https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md) |
+Deterministically create users in OfficeX that match your existing user identity system.
+
+```
+POST /v1/factory/helpers/generate-crypto-identity
+body = {
+    "secret_entropy": `${your_user_id}_${static_secret_string}`
+}
+```
+
+which will return:
+
+```ts
+export declare type IResponseGenerateCryptoIdentity = ISuccessResponse<{
+  user_id: UserID;
+  icp_principal: string;
+  evm_public_key: string;
+  evm_private_key: string;
+  origin: {
+    secret_entropy?: string;
+    seed_phrase?: string;
+  };
+}>;
+```
+
+It uses your "secret_entropy" string to deterministically generate a crypto identity on ICP & EVM (OfficeX profiles are simply crypto wallets). It will be the same one each time for your `secret_entropy`, which you can think of as a "seed password".
+
+Note that you do not need to trust OfficeX to generate your users' crypto identities. You can generate them yourself by copying the [open source code here](https://github.com/OfficeXApp/typescript-server/blob/main/src/services/auth.ts) or reference on [codesandbox](https://codesandbox.io/p/sandbox/sn95h3), or simply self hosting your own OfficeX server instance.
+
+## Bulk Scripting Actions
+
+Common workflows you will encounter include:
+
+1. Creating new organizations
+2. Adding users to organizations
+
+The code for these common workflows are provided for you [in this example](./examples/10_Full_Workflow_Demo/README.md). Or you can try them in the cloud [here on codesandbox](https://codesandbox.io/p/sandbox/554k66).
+
+## Navigation Tips
+
+Sometimes users will have complex paths in their OfficeX workspace, including magic links with lots of url metadata. You can easily navigate users to complex routes using shortlinks:
+
+`POST /v1/drive/:org_id/organization/shortlink`
+
+which returns a short string that you can use to navigate to the complex route. OfficeX will automatically redirect users to the full original route, no matter how complex it is. The shortlink is simple and looks like this: `https://officex.app/org/{drive_id_hash}/to/${shortlink_slug}`. That `shortlink_slug` is all you need.
+
+This makes it easy, clean and simple to handle navigation within your own complex frontends.
