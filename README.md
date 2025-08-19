@@ -20,7 +20,7 @@ There are 3 main ways to use the OfficeX iFrame:
 
 Each serve their own use cases.
 
-1 Ephemeral Offline Mode: Use this when you want to give your users a file management UI without code. Pure clientside, with offline capabilities and free cloud. Easy to integrate in 2 mins. Ideal for ephemeral single use tools such as YouTube downloaders & temporary AI agents. Users can still easily connect to free cloud themselves by clicking around in the iframe.
+1. Ephemeral Offline Mode: Use this when you want to give your users a file management UI without code. Pure clientside, with offline capabilities and free cloud. Easy to integrate in 2 mins. Ideal for ephemeral single use tools such as YouTube downloaders & temporary AI agents. Users can still easily connect to free cloud themselves by clicking around in the iframe.
 
 2. Injected Cloud: Use this when you want to provide your users a whitelabel OfficeX experience with cloud capabilities. You can self-host the backend yourself, or use OfficeX's free cloud. You would create orgs & profiles on behalf of your users, and own their API keys. Ideal for deep product integrations where you want to use OfficeX as a building block within your app/ecosystem.
 

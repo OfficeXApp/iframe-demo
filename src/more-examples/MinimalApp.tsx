@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 const OfficeXIFrame = () => {
   // Correctly type the useRef hook to HTMLIFrameElement
@@ -24,7 +24,7 @@ const OfficeXIFrame = () => {
       // TypeScript now knows iframeRef.current is an HTMLIFrameElement
       if (iframeRef.current && iframeRef.current.contentWindow) {
         const message = {
-          type: "officex-init",
+          type: "OFFICEX_INIT",
           data: { injected: authJson },
           tracer: `init-injected-${Date.now()}`,
         };

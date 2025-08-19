@@ -1,88 +1,20 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import "./App.css";
-
-// Types for iframe communication
-interface IFrameMessage {
-  type: string;
-  data: any;
-  tracer?: string;
-}
-
-// About Child IFrame Instance response type
-interface AboutChildIFrameInstanceResponse {
-  organization_name: string;
-  drive_id: string;
-  user_id: string;
-  profile_name: string;
-  host?: string;
-  frontend_domain?: string;
-  frontend_url?: string;
-  current_url?: string;
-}
-
-// Auth Token response type
-interface AuthTokenIFrameResponse {
-  drive_id: string;
-  user_id: string;
-  host?: string;
-  api_key_value: string;
-  tracer?: string;
-}
-
-// Label type definition
-interface LabelValue {
-  id: string;
-  value: string;
-}
-
-// REST Command types
-interface CreateFileCommand {
-  action: "CREATE_FILE";
-  payload: {
-    name: string;
-    file_size?: number;
-    expires_at?: number;
-    raw_url?: string;
-    base64?: string;
-    parent_folder_uuid?: string;
-  };
-}
-
-interface CreateFolderCommand {
-  action: "CREATE_FOLDER";
-  payload: {
-    name: string;
-    labels?: LabelValue[];
-    expires_at?: number;
-    file_conflict_resolution?: string;
-    has_sovereign_permissions?: boolean;
-    shortcut_to?: string;
-    external_id?: string;
-    external_payload?: any;
-    parent_folder_uuid?: string;
-  };
-}
+import {
+  IFrameCommandType,
+  type IFrameCommand,
+  type IFrameCommandReq_CreateFile,
+  type IFrameCommandReq_CreateFolder,
+  type IFrameCommandRes_About,
+  type IFrameCommandRes_AuthToken,
+  type IFrameCommandResult,
+  type IFrameEphemeralConfig,
+  type IFrameInjectedConfig,
+} from "@officexapp/types";
 
 // Init config types
-interface EphemeralConfig {
-  optional_org_entropy: string;
-  optional_profile_entropy: string;
-  org_name: string;
-  profile_name: string;
-}
-
-interface InjectedConfig {
-  host: string;
-  drive_id: string;
-  org_name?: string;
-  user_id: string;
-  profile_name?: string;
-  api_key_value?: string;
-  redirect_to?: string;
-}
-
 // Set a global-like variable for development mode
-const LOCAL_DEV_MODE = true;
+const LOCAL_DEV_MODE = false;
 const iframeOrigin = LOCAL_DEV_MODE
   ? "http://localhost:5173"
   : "https://officex.app";
@@ -91,9 +23,9 @@ function App() {
   const [iframeReady, setIframeReady] = useState(false);
   const [initResponse, setInitResponse] = useState<any>(null);
   const [aboutResponse, setAboutResponse] =
-    useState<AboutChildIFrameInstanceResponse | null>(null);
+    useState<IFrameCommandRes_About | null>(null);
   const [authTokenResponse, setAuthTokenResponse] =
-    useState<AuthTokenIFrameResponse | null>(null);
+    useState<IFrameCommandRes_AuthToken | null>(null);
   const [initializationAttempts, setInitializationAttempts] = useState(0);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   const [showInitModal, setShowInitModal] = useState(false);
@@ -116,7 +48,7 @@ function App() {
 
   // Folder creation state
   const [folderName, setFolderName] = useState("My New Folder");
-  const [folderLabels] = useState<LabelValue[]>([]);
+  const [folderLabels] = useState<string[]>([]);
   const [hasSovereignPermissions] = useState(false);
   const [folderParentFolderId, setFolderParentFolderId] = useState("");
 
@@ -128,18 +60,18 @@ function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Generate unique seeds for this session - persist these across refreshes
-  const optional_org_entropy = useRef(`org-123abc`);
-  const optional_profile_entropy = useRef(`profile-123xyz`);
+  const org_entropy = useRef(`org-123abc`);
+  const profile_entropy = useRef(`profile-123xyz`);
 
   // Default configurations
-  const defaultEphemeralConfig: EphemeralConfig = {
-    optional_org_entropy: optional_org_entropy.current,
-    optional_profile_entropy: optional_profile_entropy.current,
+  const defaultEphemeralConfig: IFrameEphemeralConfig = {
+    org_entropy: org_entropy.current,
+    profile_entropy: profile_entropy.current,
     org_name: "Demo Org",
     profile_name: "Demo Profile",
   };
 
-  const defaultInjectedConfig: InjectedConfig = {
+  const defaultInjectedConfig: IFrameInjectedConfig = {
     host: "https://officex.otterpad.cc",
     drive_id:
       "DriveID_sl2pa-g7ejf-ahwxr-flqz3-2szt4-34thc-tcw5n-jncrp-zpt4j-5c5wk-vqe",
@@ -186,7 +118,7 @@ function App() {
       );
 
       // Now initialize the iframe with these credentials
-      const injectedConfig: InjectedConfig = {
+      const injectedConfig: IFrameInjectedConfig = {
         host: credentials.host,
         drive_id: credentials.drive_id,
         org_name: "Granted Org",
@@ -204,7 +136,7 @@ function App() {
         setInitializationAttempts((prev) => prev + 1);
         const initData = { injected: injectedConfig };
         sendMessageToIframe(
-          "officex-init",
+          IFrameCommandType.INIT,
           initData,
           "init-grant-existing-" + Date.now()
         );
@@ -214,13 +146,13 @@ function App() {
 
   // Send message to iframe
   const sendMessageToIframe = useCallback(
-    (type: string, data: any, tracer?: string) => {
+    (type: IFrameCommandType, data: any, tracer?: string) => {
       if (!iframeRef.current?.contentWindow) {
         console.warn("IFrame not ready");
         return;
       }
 
-      const message: IFrameMessage = {
+      const message: IFrameCommand = {
         type,
         data,
         tracer: tracer || `${type}-${Date.now()}`,
@@ -239,7 +171,7 @@ function App() {
     setCurrentInitMode("ephemeral");
     const initData = { ephemeral: defaultEphemeralConfig };
     sendMessageToIframe(
-      "officex-init",
+      IFrameCommandType.INIT,
       initData,
       "init-ephemeral-" + Date.now()
     );
@@ -255,7 +187,7 @@ function App() {
       setCurrentInitMode("injected");
       const initData = { injected: parsedConfig };
       sendMessageToIframe(
-        "officex-init",
+        IFrameCommandType.INIT,
         initData,
         "init-injected-" + Date.now()
       );
@@ -285,7 +217,11 @@ function App() {
         console.warn("Cannot navigate: iframe not ready");
         return;
       }
-      sendMessageToIframe("officex-go-to-page", { route }, "nav-" + Date.now());
+      sendMessageToIframe(
+        IFrameCommandType.NAVIGATE,
+        { route },
+        "nav-" + Date.now()
+      );
     },
     [iframeReady, sendMessageToIframe]
   );
@@ -296,7 +232,7 @@ function App() {
       console.warn("Cannot get about info: iframe not ready");
       return;
     }
-    sendMessageToIframe("officex-about-iframe", {}, "about-" + Date.now());
+    sendMessageToIframe(IFrameCommandType.ABOUT, {}, "about-" + Date.now());
   }, [iframeReady, sendMessageToIframe]);
 
   // Get auth token from iframe
@@ -305,7 +241,11 @@ function App() {
       console.warn("Cannot get auth token: iframe not ready");
       return;
     }
-    sendMessageToIframe("officex-auth-token", {}, "auth-token-" + Date.now());
+    sendMessageToIframe(
+      IFrameCommandType.AUTH_TOKEN,
+      {},
+      "auth-token-" + Date.now()
+    );
   }, [iframeReady, sendMessageToIframe]);
 
   // Create file from URL
@@ -317,7 +257,7 @@ function App() {
 
     const urlFileName = rawUrl.split("/").pop() || "downloaded-file";
 
-    const command: CreateFileCommand = {
+    const command: IFrameCommandReq_CreateFile = {
       action: "CREATE_FILE",
       payload: {
         name: urlFileName,
@@ -328,7 +268,7 @@ function App() {
     };
 
     sendMessageToIframe(
-      "officex-rest-command",
+      IFrameCommandType.DIRECTORY_ACTION,
       command,
       "create-file-" + Date.now()
     );
@@ -353,7 +293,7 @@ function App() {
         reader.readAsDataURL(selectedFile);
       });
 
-      const command: CreateFileCommand = {
+      const command: IFrameCommandReq_CreateFile = {
         action: "CREATE_FILE",
         payload: {
           name: selectedFile.name,
@@ -365,7 +305,7 @@ function App() {
       };
 
       sendMessageToIframe(
-        "officex-rest-command",
+        IFrameCommandType.DIRECTORY_ACTION,
         command,
         "create-file-data-" + Date.now()
       );
@@ -381,7 +321,7 @@ function App() {
       return;
     }
 
-    const command: CreateFolderCommand = {
+    const command: IFrameCommandReq_CreateFolder = {
       action: "CREATE_FOLDER",
       payload: {
         name: folderName,
@@ -392,7 +332,7 @@ function App() {
     };
 
     sendMessageToIframe(
-      "officex-rest-command",
+      IFrameCommandType.DIRECTORY_ACTION,
       command,
       "create-folder-" + Date.now()
     );
@@ -462,7 +402,8 @@ function App() {
         return;
       }
 
-      const { type, data, tracer }: IFrameMessage = event.data;
+      const { type, data, tracer, success, error }: IFrameCommandResult =
+        event.data;
       console.log("Received message from child iframe:", {
         type,
         data,
@@ -470,56 +411,55 @@ function App() {
       });
 
       switch (type) {
-        case "officex-init-response":
-          if (data.success) {
+        case IFrameCommandType.INIT:
+          if (success) {
             setIframeReady(true);
             setInitResponse(data);
             console.log("IFrame initialized successfully:", data);
           } else {
             setIframeReady(false);
             setInitResponse(data);
-            console.error("IFrame initialization failed:", data.error);
+            console.error("IFrame initialization failed:", error);
           }
           break;
 
-        case "officex-go-to-page-response":
-          if (data.success) {
+        case IFrameCommandType.NAVIGATE:
+          if (success) {
             console.log("Navigation successful:", data.route);
           } else {
-            console.error("Navigation failed:", data.error);
+            console.error("Navigation failed:", error);
           }
           break;
 
-        case "officex-about-iframe-response":
-        case "officex-about-child-iframe-instance-response":
-          if (data.success) {
-            setAboutResponse(data.data);
-            console.log("About Child IFrame Instance successful:", data.data);
+        case IFrameCommandType.ABOUT:
+          if (success) {
+            setAboutResponse(data);
+            console.log("About Child IFrame Instance successful:", data);
           } else {
             setAboutResponse(null);
-            console.error("About Child IFrame Instance failed:", data.error);
+            console.error("About Child IFrame Instance failed:", error);
           }
           break;
 
-        case "officex-auth-token-response":
-          if (data.success) {
-            setAuthTokenResponse(data.data);
-            console.log("Auth token received successfully:", data.data);
+        case IFrameCommandType.AUTH_TOKEN:
+          if (success) {
+            setAuthTokenResponse(data);
+            console.log("Auth token received successfully:", data);
           } else {
             setAuthTokenResponse(null);
-            console.error("Auth token request failed:", data.error);
+            console.error("Auth token request failed:", error);
           }
           break;
 
-        case "officex-rest-command-response":
+        case IFrameCommandType.DIRECTORY_ACTION:
           console.log("REST command response:", data);
           setLastCommandResult(data);
-          if (data.success) {
-            console.log("REST command successful:", data.data);
-            if (data.data.message?.includes("Folder")) {
-              setLastFolderResult(data.data);
-            } else if (data.data.message?.includes("File")) {
-              setLastFileResult(data.data);
+          if (success) {
+            console.log("REST command successful:", data);
+            if (data.message?.includes("Folder")) {
+              setLastFolderResult(data);
+            } else if (data.message?.includes("File")) {
+              setLastFileResult(data);
             }
           } else {
             console.error("REST command failed:", data.error);
@@ -531,7 +471,7 @@ function App() {
           }
           break;
 
-        case "officex-heartbeat":
+        case IFrameCommandType.HEARTBEAT:
           console.log("Heartbeat received from iframe:", data.timestamp);
           break;
 
@@ -595,8 +535,8 @@ function App() {
 
     iframeElement.onload = () => {
       const ephemeralConfig = {
-        optional_org_entropy: "____",
-        optional_profile_entropy: "____",
+        org_entropy: "____",
+        profile_entropy: "____",
         org_name: "Offline Org",
         profile_name: "Anon",
       };
@@ -1048,7 +988,7 @@ function App() {
                             <strong style={{ color: "#212529" }}>
                               Organization:
                             </strong>{" "}
-                            {aboutResponse.organization_name}
+                            {aboutResponse.org_name}
                           </div>
                           <div>
                             <strong style={{ color: "#212529" }}>
@@ -1175,13 +1115,13 @@ function App() {
                               marginTop: "5px",
                             }}
                           >
-                            {authTokenResponse.api_key_value}
+                            {authTokenResponse.auth_token}
                           </div>
                         </div>
                         <button
                           onClick={() => {
                             navigator.clipboard.writeText(
-                              authTokenResponse.api_key_value
+                              authTokenResponse.auth_token
                             );
                             alert("Auth token copied to clipboard!");
                           }}
@@ -1207,9 +1147,9 @@ function App() {
             </div>
           )}
 
-          {/* REST Commands Section */}
+          {/* Directory Commands Section */}
           <div style={{ marginBottom: "30px" }}>
-            <h4>REST Commands</h4>
+            <h4>Directory Commands</h4>
 
             <div
               style={{
@@ -1509,13 +1449,13 @@ function App() {
                   <>
                     <div>
                       <strong style={{ color: "#212529" }}>Org Secret:</strong>{" "}
-                      {optional_org_entropy.current}
+                      {org_entropy.current}
                     </div>
                     <div>
                       <strong style={{ color: "#212529" }}>
                         Profile Secret:
                       </strong>{" "}
-                      {optional_profile_entropy.current}
+                      {profile_entropy.current}
                     </div>
                   </>
                 )}
@@ -1529,9 +1469,6 @@ function App() {
                 <pre
                   style={{
                     ...codeStyle,
-                    border: initResponse.success
-                      ? "2px solid #4CAF50"
-                      : "2px solid #f44336",
                   }}
                 >
                   {JSON.stringify(initResponse, null, 2)}
@@ -1550,21 +1487,9 @@ function App() {
               </h4>
               {lastCommandResult ? (
                 <div>
-                  {lastCommandResult.success ? (
-                    <div style={{ color: "#28a745", marginBottom: "10px" }}>
-                      ✅ <strong>Success!</strong>
-                    </div>
-                  ) : (
-                    <div style={{ color: "#dc3545", marginBottom: "10px" }}>
-                      ❌ <strong>Failed</strong>
-                    </div>
-                  )}
                   <pre
                     style={{
                       ...codeStyle,
-                      border: lastCommandResult.success
-                        ? "2px solid #4CAF50"
-                        : "2px solid #f44336",
                       maxHeight: "200px",
                       overflow: "auto",
                     }}
@@ -1574,8 +1499,8 @@ function App() {
                 </div>
               ) : (
                 <div style={{ color: "#6c757d", fontStyle: "italic" }}>
-                  REST command results will appear here. Success/error alerts
-                  will also appear for completed commands.
+                  Directory command results will appear here. Success/error
+                  alerts will also appear for completed commands.
                 </div>
               )}
             </div>
@@ -1589,11 +1514,57 @@ function App() {
         <h2>Examples Appendix</h2>
         <p>Popular Use Cases and examples with code snippets</p>
         <br />
+        <details>
+          <summary>View Common Patterns</summary>
+
+          <section style={{ textAlign: "left" }}>
+            <p>There are 3 main ways to use the OfficeX iFrame: </p>
+
+            <ol>
+              <li>Ephemeral Offline Mode</li>
+              <li>Managed Cloud (aka Injected Auth)</li>
+              <li>Grant Existing</li>
+            </ol>
+
+            <p>Each serve their own use cases.</p>
+
+            <ol>
+              <li>
+                Ephemeral Offline Mode: Use this when you want to give your
+                users a file management UI without code. Pure clientside, with
+                offline capabilities and free cloud. Easy to integrate in 2
+                mins. Ideal for ephemeral single use tools such as YouTube
+                downloaders & temporary AI agents. Users can still easily
+                connect to free cloud themselves by clicking around in the
+                iframe.
+              </li>
+              <li>
+                {" "}
+                Injected Cloud: Use this when you want to provide your users a
+                whitelabel OfficeX experience with cloud capabilities. You can
+                self-host the backend yourself, or use OfficeX's free cloud. You
+                would create orgs & profiles on behalf of your users, and own
+                their API keys. Ideal for deep product integrations where you
+                want to use OfficeX as a building block within your
+                app/ecosystem.
+              </li>
+              <li>
+                Grant Existing: Use this when you want users to bring their own
+                OfficeX workspace, and your app simply connects to it. This is
+                ideal for lightweight integrations such as AI Agents, chrome
+                extensions, 3rd party apps, etc. You can still use this method
+                to render in an iframe, or use via REST API.
+              </li>
+            </ol>
+          </section>
+        </details>
+        <br />
         <table className="examples-table">
           <thead>
             <tr>
               <th>Use Case</th>
               <th>Description</th>
+              <th>Recommended Pattern</th>
               <th>GitHub Example</th>
             </tr>
           </thead>
@@ -1602,6 +1573,7 @@ function App() {
               <tr key={index}>
                 <td>{example.title}</td>
                 <td>{example.description}</td>
+                <td>{example.pattern}</td>
                 <td>
                   <a
                     href={example.github}
@@ -1615,6 +1587,53 @@ function App() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <br />
+      <br />
+      <br />
+      <div style={{ marginTop: "64px", width: "100%", marginBottom: "100px" }}>
+        <h2>Create Org</h2>
+        <p>Using REST API</p>
+        <br />
+        <iframe
+          src="https://codesandbox.io/p/sandbox/vrvxmc"
+          style={{
+            width: "100%",
+            height: "700px",
+            border: "0",
+            borderRadius: "4px",
+            overflow: "hidden",
+          }}
+          title="bulk-scripting-officex"
+          allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+          sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+        ></iframe>
+      </div>
+
+      <br />
+      <br />
+      <br />
+      <div style={{ marginTop: "64px", width: "100%", marginBottom: "100px" }}>
+        <h2>Generate Crypto Identity</h2>
+        <p>
+          Interactive UI for creating deterministic OfficeX users from your
+          identity system
+        </p>
+        <br />
+        <iframe
+          src="https://codesandbox.io/embed/sn95h3?view=preview&module=%2Fsrc%2Fcode-snippet.ts"
+          style={{
+            width: "100%",
+            height: "700px",
+            border: "0",
+            borderRadius: "4px",
+            overflow: "hidden",
+          }}
+          title="generate-crypto-identities-officex"
+          allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+          sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+        ></iframe>
       </div>
       <br />
       <br />
@@ -1640,6 +1659,7 @@ function App() {
           sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
         ></iframe>
       </div>
+
       <br />
       <br />
       <br />
@@ -1649,6 +1669,28 @@ function App() {
         <br />
         <iframe
           src="https://codesandbox.io/embed/554k66?view=preview&module=%2Fsrc%2Fpages%2Fcreate-org-bulk-populate%2Fcode-snippet.js"
+          style={{
+            width: "100%",
+            height: "700px",
+            border: "0",
+            borderRadius: "4px",
+            overflow: "hidden",
+          }}
+          title="bulk-scripting-officex"
+          allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+          sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+        ></iframe>
+      </div>
+
+      <br />
+      <br />
+      <br />
+      <div style={{ marginTop: "64px", width: "100%", marginBottom: "100px" }}>
+        <h2>Embed Spreadsheet</h2>
+        <p>Share public views of OfficeX files, eg. spreadsheets</p>
+        <br />
+        <iframe
+          src="https://officex.app/org/DriveID_4lpy3-m5gb2-2ok44-na4np-o3iyk-kxngj-tuo6z-hcjaz-aujfy-5bbza-xae__aHR0cHM6Ly9vZmZpY2V4Lm90dGVycGFkLmNj/drive/AWS_BUCKET/DiskID_e6d790e5-4daa-4a10-9cc3-f16db261f2a6/FolderID_7169bfbe-c5e3-4c56-8c66-7193c44ffcad/FileID_b2e3d5d9-4c82-4db5-ac18-a4f4361bd3a5/apps/sheets"
           style={{
             width: "100%",
             height: "700px",
@@ -1725,12 +1767,14 @@ const EXAMPLES = [
     title: "Anonymous iframe",
     description:
       "Give your users a file management UI without code. Pure clientside, with offline capabilities and free cloud. Easy to integrate in 2 mins. Ideal for quick prototypes or adding basic file features to any website without a backend.",
+    pattern: "Ephemeral Offline Mode",
     github:
       "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
   {
     title: "Single Use Tools",
     description: `Eg. YouTube downloaders, PDF generators, file converters...etc. Give your users a clean, robust clientside UI for file management & offline storage. Perfect for tools that need to process files securely and locally without a user account.`,
+    pattern: "Grant Existing / Ephemeral Offline Mode",
     github:
       "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
@@ -1738,6 +1782,7 @@ const EXAMPLES = [
     title: "Community Platforms",
     description:
       "Eg. Competitors to Discord, Reddit, Farcaster, etc. Give your communities a full digital storage experience without leaving your platform. Community files and folders, permissions to users & groups, clean modern UI. Full developer REST API available, 100% open source self-hostable, whitelabel.",
+    pattern: "Managed Cloud",
     github:
       "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
@@ -1745,6 +1790,7 @@ const EXAMPLES = [
     title: "Workplace Tools",
     description:
       "Eg. Competitors to Adobe, Upwork, Zapier, Protonmail, CRMs, etc. Give your professionals a full digital storage experience without leaving your platform. Integrate file management, version control, and collaboration tools directly into your professional-grade software. Full developer REST API available, 100% open source self-hostable, whitelabel.",
+    pattern: "Managed Cloud / Grant Existing",
     github:
       "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
@@ -1752,6 +1798,7 @@ const EXAMPLES = [
     title: "Online Education",
     description:
       "Eg. Running your own online course, bootcamp, cohort based learning platform, etc. Provide a private, secure space for students and instructors to share course materials, submit assignments, and collaborate on projects.",
+    pattern: "Managed Cloud / Grant Existing",
     github:
       "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
@@ -1759,6 +1806,7 @@ const EXAMPLES = [
     title: "Chrome Extensions",
     description:
       "Eg. Competitors to Loom screen recorder, tweet generators, etc. Use OfficeX as a local or cloud storage backend for your extension, enabling users to manage recordings, generated content, or other files directly from their browser.",
+    pattern: "Managed Cloud / Grant Existing",
     github:
       "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
@@ -1766,6 +1814,7 @@ const EXAMPLES = [
     title: "AI Agents",
     description:
       "Eg. ChatGPT, DeepSeek, Claude, etc. Enable AI agents to interact with user-managed files, allowing them to summarize documents, generate content based on local data, or perform actions on files stored in a user's private space.",
+    pattern: "Any Mode",
     github:
       "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
@@ -1773,6 +1822,7 @@ const EXAMPLES = [
     title: "Self-Hosting for Enterprise",
     description:
       "Eg. Schools, Agencies, Governments, etc. Provide a 100% open-source, customizable, and self-hostable file solution to maintain full control over sensitive data, meet compliance requirements, and reduce reliance on third-party cloud providers.",
+    pattern: "Managed Cloud (Injected Auth)",
     github:
       "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },
@@ -1780,6 +1830,7 @@ const EXAMPLES = [
     title: "Self-Hosting for Personal",
     description:
       "Eg. Home, Family, Privacy, etc. Offer a private and secure self-hosted solution for families and individuals to manage their files, photos, and personal data without worrying about corporate data harvesting or privacy concerns.",
+    pattern: "Managed Cloud",
     github:
       "https://github.com/OfficeXApp/iframe-demo/tree/main/examples/10_Full_Workflow_Demo/README.md",
   },

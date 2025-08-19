@@ -134,8 +134,3 @@ button:focus-visible {
   border: 1px solid #ddd;
   text-align: left;
 }
-
-/* Zebra-striping for even rows */
-.examples-table tbody tr:nth-child(even) {
-  background-color: #2d2d2d;
-}
