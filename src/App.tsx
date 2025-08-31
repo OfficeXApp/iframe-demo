@@ -60,8 +60,8 @@ function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Generate unique seeds for this session - persist these across refreshes
-  const org_entropy = useRef(`org-123abc`);
-  const profile_entropy = useRef(`profile-123xyz`);
+  const org_entropy = useRef(`org_123abc`);
+  const profile_entropy = useRef(`user_123_xyz`);
 
   // Default configurations
   const defaultEphemeralConfig: IFrameEphemeralConfig = {
@@ -1589,100 +1589,7 @@ function App() {
         </table>
       </div>
 
-      <br />
-      <br />
-      <br />
-      <div style={{ marginTop: "64px", width: "100%", marginBottom: "100px" }}>
-        <h2>Create Org</h2>
-        <p>Using REST API</p>
-        <br />
-        <iframe
-          src="https://codesandbox.io/p/sandbox/vrvxmc"
-          style={{
-            width: "100%",
-            height: "700px",
-            border: "0",
-            borderRadius: "4px",
-            overflow: "hidden",
-          }}
-          title="bulk-scripting-officex"
-          allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-          sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
-        ></iframe>
-      </div>
-
-      <br />
-      <br />
-      <br />
-      <div style={{ marginTop: "64px", width: "100%", marginBottom: "100px" }}>
-        <h2>Generate Crypto Identity</h2>
-        <p>
-          Interactive UI for creating deterministic OfficeX users from your
-          identity system
-        </p>
-        <br />
-        <iframe
-          src="https://codesandbox.io/embed/sn95h3?view=preview&module=%2Fsrc%2Fcode-snippet.ts"
-          style={{
-            width: "100%",
-            height: "700px",
-            border: "0",
-            borderRadius: "4px",
-            overflow: "hidden",
-          }}
-          title="generate-crypto-identities-officex"
-          allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-          sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
-        ></iframe>
-      </div>
-      <br />
-      <br />
-      <br />
-      <div style={{ marginTop: "64px", width: "100%", marginBottom: "100px" }}>
-        <h2>Frequently Used Scripts</h2>
-        <p>
-          Copy paste these frequently used REST API scripts into your code for
-          easy integration
-        </p>
-        <br />
-        <iframe
-          src="https://codesandbox.io/embed/554k66?view=editor+%2B+preview&module=%2Fsrc%2Fpages%2Fcreate-org-bulk-populate%2Fcode-snippet.js"
-          style={{
-            width: "100%",
-            height: "700px",
-            border: "0",
-            borderRadius: "4px",
-            overflow: "hidden",
-          }}
-          title="bulk-scripting-officex"
-          allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-          sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
-        ></iframe>
-      </div>
-
-      <br />
-      <br />
-      <br />
-      <div style={{ marginTop: "64px", width: "100%", marginBottom: "100px" }}>
-        <h2>Bulk CSV Actions</h2>
-        <p>Interactive UI for bulk CSV actions</p>
-        <br />
-        <iframe
-          src="https://codesandbox.io/embed/554k66?view=preview&module=%2Fsrc%2Fpages%2Fcreate-org-bulk-populate%2Fcode-snippet.js"
-          style={{
-            width: "100%",
-            height: "700px",
-            border: "0",
-            borderRadius: "4px",
-            overflow: "hidden",
-          }}
-          title="bulk-scripting-officex"
-          allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-          sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
-        ></iframe>
-      </div>
-
-      <br />
+      {/* <br />
       <br />
       <br />
       <div style={{ marginTop: "64px", width: "100%", marginBottom: "100px" }}>
@@ -1702,7 +1609,7 @@ function App() {
           allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
           sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
         ></iframe>
-      </div>
+      </div> */}
     </div>
   );
 }
